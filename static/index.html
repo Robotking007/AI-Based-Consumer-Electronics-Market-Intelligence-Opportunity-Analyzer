@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Opportunity Analyzer - Consumer Electronics (TWS)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <!-- Chart.js for high-fidelity responsive charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+      </div>
+      <div class="brand-titles">
+        <h1 class="brand-name">Market Opportunity Analyzer</h1>
+        <span class="brand-subtitle">Consumer Electronics (TWS)</span>
+      </div>
+    </div>
+
+    <!-- Search Bar with Autocomplete -->
+    <div class="nav-search-container">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          id="productSearchInput" 
+          placeholder="Search product or brand (e.g. Boat, Noise, JBL...)" 
+          autocomplete="off"
+        >
+      </div>
+      <div id="searchDropdown" class="search-dropdown hidden"></div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="nav-actions">
+      <button class="date-picker-btn" id="datePickerBtn">
+        <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span id="currentDateRange">Jan 2025 - Dec 2025</span>
+        <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <div class="app-layout">
+    
+    <!-- Left Navigation Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-menu">
+        <a href="#" class="nav-item active" data-tab="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="product-analysis">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          <span>Product Analysis</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="demand-prediction">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+          <span>Demand Prediction</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="sentiment-analysis">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Sentiment Analysis</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="price-competition">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <span>Price & Competition</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="market-trends">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Market Trends</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="recommendations">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+            <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+          </svg>
+          <span>Recommendations</span>
+        </a>
+
+        <a href="#" class="nav-item" data-tab="model-monitoring">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          <span>Model Monitoring</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content Canvas -->
+    <main class="main-content">
+      
+      <!-- Top 4 Metric Summary Cards -->
+      <section class="summary-cards-grid">
+        <!-- 1. Market Opportunity -->
+        <div class="metric-card">
+          <div class="metric-card-inner">
+            <div class="metric-icon-wrap icon-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <div class="metric-text-content">
+              <span class="metric-label">Market Opportunity</span>
+              <h2 class="metric-value value-green" id="cardMarketOpportunity">HIGH</h2>
+              <p class="metric-subtitle" id="cardMarketOpportunitySub">Strong demand and positive market indicators</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Predicted Demand Growth -->
+        <div class="metric-card">
+          <div class="metric-card-inner">
+            <div class="metric-icon-wrap icon-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+            </div>
+            <div class="metric-text-content">
+              <span class="metric-label">Predicted Demand Growth</span>
+              <h2 class="metric-value value-blue" id="cardDemandGrowth">+18.6%</h2>
+              <p class="metric-subtitle" id="cardDemandGrowthSub">Next 3 months (Compared to category avg. 11.2%)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Sentiment Score -->
+        <div class="metric-card">
+          <div class="metric-card-inner">
+            <div class="metric-icon-wrap icon-purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
+            </div>
+            <div class="metric-text-content">
+              <span class="metric-label">Sentiment Score</span>
+              <h2 class="metric-value value-purple" id="cardSentimentScore">0.72</h2>
+              <p class="metric-subtitle" id="cardSentimentScoreSub">72% Positive Reviews (12% Neutral, 16% Negative)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Optimal Price Range -->
+        <div class="metric-card">
+          <div class="metric-card-inner">
+            <div class="metric-icon-wrap icon-red">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+            </div>
+            <div class="metric-text-content">
+              <span class="metric-label">Optimal Price Range</span>
+              <h2 class="metric-value value-red" id="cardPriceRange">₹2,000 – ₹2,800</h2>
+              <p class="metric-subtitle" id="cardPriceRangeSub">Recommended for new product based on market analysis</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Hero Product Analysis Section -->
+      <section class="content-card hero-product-card">
+        <h3 class="card-title" id="heroProductTitle">Product Analysis – Boat Airdopes 141 (TWS)</h3>
+        
+        <div class="hero-grid">
+          <!-- Col 1: Product Image -->
+          <div class="hero-col hero-image-col">
+            <div class="product-image-container">
+              <img id="heroProductImg" src="/static/images/boat_airdopes_141.png" alt="Boat Airdopes 141 TWS Earbuds">
+            </div>
+          </div>
+
+          <!-- Col 2: Specifications Table -->
+          <div class="hero-col hero-specs-col">
+            <div class="specs-grid">
+              <div class="spec-row"><span class="spec-label">Brand:</span><span class="spec-value" id="specBrand">Boat</span></div>
+              <div class="spec-row"><span class="spec-label">Model:</span><span class="spec-value" id="specModel">Airdopes 141</span></div>
+              <div class="spec-row"><span class="spec-label">Category:</span><span class="spec-value" id="specCategory">True Wireless Earbuds</span></div>
+              <div class="spec-row"><span class="spec-label">Current Price:</span><span class="spec-value" id="specCurrentPrice">₹2,499</span></div>
+              <div class="spec-row"><span class="spec-label">Discount:</span><span class="spec-value" id="specDiscount">20% (was ₹3,099)</span></div>
+              <div class="spec-row"><span class="spec-label">Rating:</span><span class="spec-value" id="specRating">4.3 / 5</span></div>
+              <div class="spec-row"><span class="spec-label">Total Reviews:</span><span class="spec-value" id="specTotalReviews">12,450</span></div>
+              <div class="spec-row"><span class="spec-label">Availability:</span><span class="spec-value status-instock" id="specAvailability"><span class="dot-green"></span> In Stock</span></div>
+            </div>
+          </div>
+
+          <!-- Col 3: Market Entry Recommendation -->
+          <div class="hero-col hero-recommendation-col">
+            <div class="recommendation-header">
+              <div class="trophy-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                  <path d="M4 22h16"></path>
+                  <path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path>
+                  <path d="M14 14.66V17c0 .55.45 1 1 1h2"></path>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+                </svg>
+              </div>
+              <div class="recommendation-title-wrap">
+                <span class="recommendation-small">Market Entry Recommendation</span>
+                <h4 class="recommendation-headline" id="recHeadline">HIGH OPPORTUNITY</h4>
+              </div>
+            </div>
+
+            <ul class="recommendation-checklist" id="recChecklist">
+              <li><span class="check-icon">✔</span> Strong predicted demand growth</li>
+              <li><span class="check-icon">✔</span> Positive customer sentiment</li>
+              <li><span class="check-icon">✔</span> Competitive price positioning</li>
+              <li><span class="check-icon">✔</span> Growing search trend</li>
+              <li><span class="check-icon">✔</span> Manageable competition</li>
+            </ul>
+          </div>
+
+          <!-- Col 4: Overall Opportunity Score Gauge -->
+          <div class="hero-col hero-gauge-col">
+            <span class="gauge-title">Overall Opportunity Score</span>
+            <div class="circular-gauge-wrap">
+              <svg class="circular-gauge" viewBox="0 0 120 120">
+                <circle class="gauge-bg" cx="60" cy="60" r="48"></circle>
+                <circle class="gauge-fill" id="gaugeProgress" cx="60" cy="60" r="48" style="stroke-dashoffset: 66.3;"></circle>
+              </svg>
+              <div class="gauge-center-text">
+                <span class="gauge-score" id="gaugeScoreNumber">78</span><span class="gauge-max"> / 100</span>
+              </div>
+            </div>
+            <p class="gauge-status-label" id="gaugeStatusLabel">High potential for market entry</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Middle Row: 2 Charts -->
+      <section class="charts-row-middle">
+        
+        <!-- Left: Predicted Demand Growth Line Chart -->
+        <div class="content-card chart-card">
+          <div class="card-header-with-badge">
+            <div class="card-header-titles">
+              <h3 class="card-title">Predicted Demand Growth</h3>
+              <div class="chart-legend-custom">
+                <span class="legend-item"><span class="legend-dot dot-blue"></span> Predicted Demand</span>
+                <span class="legend-item"><span class="legend-dash dash-gray"></span> Historical Trend</span>
+              </div>
+            </div>
+            <span class="badge badge-green" id="demandGrowthBadge">+18.6% Growth</span>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="demandGrowthChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Right: Review Sentiment Analysis -->
+        <div class="content-card chart-card">
+          <div class="card-header-with-badge">
+            <h3 class="card-title">Review Sentiment Analysis</h3>
+          </div>
+          <div class="sentiment-content-layout">
+            <!-- Left: Donut Chart -->
+            <div class="sentiment-donut-wrap">
+              <div class="donut-chart-canvas-box">
+                <canvas id="sentimentDonutChart"></canvas>
+                <div class="donut-center-label">
+                  <span class="donut-number" id="donutReviewsCount">12,450</span>
+                  <span class="donut-sub">Reviews</span>
+                </div>
+              </div>
+              <div class="donut-legend">
+                <div class="donut-legend-item"><span class="dot-green"></span> <span id="posRatio">72%</span> Positive</div>
+                <div class="donut-legend-item"><span class="dot-gray"></span> <span id="neuRatio">12%</span> Neutral</div>
+                <div class="donut-legend-item"><span class="dot-red"></span> <span id="negRatio">16%</span> Negative</div>
+              </div>
+            </div>
+
+            <!-- Right: Key Review Aspects -->
+            <div class="sentiment-aspects-wrap">
+              <span class="aspects-heading">Key Review Aspects</span>
+              <div class="aspect-rows-list" id="aspectsList">
+                <div class="aspect-row">
+                  <span class="aspect-name">Sound Quality</span>
+                  <div class="aspect-bar-track">
+                    <div class="aspect-bar-fill" style="width: 81%; background-color: #10b981;"></div>
+                  </div>
+                  <span class="aspect-score">0.81</span>
+                </div>
+                <div class="aspect-row">
+                  <span class="aspect-name">Battery Life</span>
+                  <div class="aspect-bar-track">
+                    <div class="aspect-bar-fill" style="width: 76%; background-color: #10b981;"></div>
+                  </div>
+                  <span class="aspect-score">0.76</span>
+                </div>
+                <div class="aspect-row">
+                  <span class="aspect-name">Comfort</span>
+                  <div class="aspect-bar-track">
+                    <div class="aspect-bar-fill" style="width: 69%; background-color: #10b981;"></div>
+                  </div>
+                  <span class="aspect-score">0.69</span>
+                </div>
+                <div class="aspect-row">
+                  <span class="aspect-name">Microphone</span>
+                  <div class="aspect-bar-track">
+                    <div class="aspect-bar-fill" style="width: 58%; background-color: #f59e0b;"></div>
+                  </div>
+                  <span class="aspect-score">0.58</span>
+                </div>
+                <div class="aspect-row">
+                  <span class="aspect-name">Value for Money</span>
+                  <div class="aspect-bar-track">
+                    <div class="aspect-bar-fill" style="width: 77%; background-color: #10b981;"></div>
+                  </div>
+                  <span class="aspect-score">0.77</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Bottom Row: 3 Cards -->
+      <section class="charts-row-bottom">
+        
+        <!-- Bottom Col 1: Price Positioning -->
+        <div class="content-card card-bottom">
+          <div class="card-header-with-badge">
+            <h3 class="card-title">Price Positioning</h3>
+          </div>
+          <div class="scatter-chart-wrap">
+            <canvas id="pricePositionChart"></canvas>
+          </div>
+          <div class="scatter-legend">
+            <span class="legend-item"><span class="dot-red"></span> Boat (Selected)</span>
+            <span class="legend-item"><span class="dot-blue"></span> Competition</span>
+            <span class="legend-item"><span class="dot-light-blue"></span> Similar Products</span>
+          </div>
+        </div>
+
+        <!-- Bottom Col 2: Competition Analysis Table -->
+        <div class="content-card card-bottom">
+          <div class="card-header-with-badge">
+            <h3 class="card-title">Competition Analysis</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="competition-table" id="competitionTable">
+              <thead>
+                <tr>
+                  <th>Brand</th>
+                  <th>Model</th>
+                  <th>Price (₹)</th>
+                  <th>Rating</th>
+                  <th>Reviews</th>
+                </tr>
+              </thead>
+              <tbody id="competitionTableBody">
+                <tr class="row-selected">
+                  <td>Boat</td>
+                  <td>Airdopes 141</td>
+                  <td>2,499</td>
+                  <td>4.3</td>
+                  <td>12,450</td>
+                </tr>
+                <tr>
+                  <td>Noise</td>
+                  <td>Buds VS104</td>
+                  <td>2,199</td>
+                  <td>4.1</td>
+                  <td>9,300</td>
+                </tr>
+                <tr>
+                  <td>Realme</td>
+                  <td>Buds T300</td>
+                  <td>2,799</td>
+                  <td>4.2</td>
+                  <td>11,200</td>
+                </tr>
+                <tr>
+                  <td>JBL</td>
+                  <td>Wave Beam</td>
+                  <td>3,299</td>
+                  <td>4.4</td>
+                  <td>18,100</td>
+                </tr>
+                <tr>
+                  <td>OnePlus</td>
+                  <td>Nord Buds 2r</td>
+                  <td>2,999</td>
+                  <td>4.3</td>
+                  <td>14,800</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bottom Col 3: Search Trend (Google Trends) -->
+        <div class="content-card card-bottom">
+          <div class="card-header-with-badge">
+            <h3 class="card-title">Search Trend (Google Trends)</h3>
+            <span class="badge badge-purple" id="searchTrendBadge">+42% vs last year</span>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="searchTrendChart"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Model Telemetry Modal / Tab Panel -->
+      <section id="modelMonitoringSection" class="content-card hidden-section">
+        <h3 class="card-title">SageMaker Model Telemetry & Pipeline Status</h3>
+        <div class="model-telemetry-grid">
+          <div class="telemetry-item">
+            <span class="telemetry-label">Active Model Package</span>
+            <span class="telemetry-value" id="telModelName">ConsumerElectronics-DemandGrowth-XGBoost</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Model Registry Status</span>
+            <span class="telemetry-value badge-green">Approved (Champion)</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Test Set R² Score</span>
+            <span class="telemetry-value">90.18% (0.902)</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Challenger RMSE</span>
+            <span class="telemetry-value">2.55 (Threshold: &le; 12.0)</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">MAE / Relative Error</span>
+            <span class="telemetry-value">&plusmn;2.04% (9.1% error)</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Saved Artifact Formats</span>
+            <span class="telemetry-value">.joblib &bull; .pkl &bull; model.tar.gz</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
