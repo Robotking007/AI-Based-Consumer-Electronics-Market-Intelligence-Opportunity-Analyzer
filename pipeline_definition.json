@@ -3,13 +3,13 @@
   "Metadata": {
     "PipelineName": "ConsumerElectronics-DemandGrowth-Pipeline",
     "Description": "End-to-End MLOps Pipeline for Consumer Electronics Market Intelligence (Group 10)",
-    "LastModified": "2026-10-17T18:47:26.693177"
+    "LastModified": "2026-10-17T18:48:02.256201"
   },
   "Parameters": [
     {
       "Name": "InputDataUrl",
       "Type": "String",
-      "DefaultValue": "s3://consumer-electronics-mlops/raw/date=2026-10-17/consumer_electronics_market_20k.csv"
+      "DefaultValue": "s3://consumer-electronics-mlops-533267153786/raw/date=2026-10-17/consumer_electronics_market_20k.csv"
     },
     {
       "Name": "ProcessingInstanceType",
@@ -72,7 +72,7 @@
             "InputName": "code",
             "AppManaged": false,
             "S3Input": {
-              "S3Uri": "s3://consumer-electronics-mlops/code/preprocessing.py",
+              "S3Uri": "s3://consumer-electronics-mlops-533267153786/code/preprocessing.py",
               "LocalPath": "/opt/ml/processing/input/code",
               "S3DataType": "S3Prefix",
               "S3InputMode": "File"
@@ -85,7 +85,7 @@
               "OutputName": "train",
               "AppManaged": false,
               "S3Output": {
-                "S3Uri": "s3://consumer-electronics-mlops/processed/train",
+                "S3Uri": "s3://consumer-electronics-mlops-533267153786/processed/train",
                 "LocalPath": "/opt/ml/processing/output/train",
                 "S3UploadMode": "EndOfJob"
               }
@@ -94,7 +94,7 @@
               "OutputName": "validation",
               "AppManaged": false,
               "S3Output": {
-                "S3Uri": "s3://consumer-electronics-mlops/processed/validation",
+                "S3Uri": "s3://consumer-electronics-mlops-533267153786/processed/validation",
                 "LocalPath": "/opt/ml/processing/output/validation",
                 "S3UploadMode": "EndOfJob"
               }
@@ -103,7 +103,7 @@
               "OutputName": "test",
               "AppManaged": false,
               "S3Output": {
-                "S3Uri": "s3://consumer-electronics-mlops/processed/test",
+                "S3Uri": "s3://consumer-electronics-mlops-533267153786/processed/test",
                 "LocalPath": "/opt/ml/processing/output/test",
                 "S3UploadMode": "EndOfJob"
               }
@@ -140,7 +140,7 @@
             "DataSource": {
               "S3DataSource": {
                 "S3DataType": "S3Prefix",
-                "S3Uri": "s3://consumer-electronics-mlops/processed/train",
+                "S3Uri": "s3://consumer-electronics-mlops-533267153786/processed/train",
                 "S3DataDistributionType": "FullyReplicated"
               }
             },
@@ -151,7 +151,7 @@
             "DataSource": {
               "S3DataSource": {
                 "S3DataType": "S3Prefix",
-                "S3Uri": "s3://consumer-electronics-mlops/processed/validation",
+                "S3Uri": "s3://consumer-electronics-mlops-533267153786/processed/validation",
                 "S3DataDistributionType": "FullyReplicated"
               }
             },
@@ -159,7 +159,7 @@
           }
         ],
         "OutputDataConfig": {
-          "S3OutputPath": "s3://consumer-electronics-mlops/models"
+          "S3OutputPath": "s3://consumer-electronics-mlops-533267153786/models"
         },
         "ResourceConfig": {
           "InstanceCount": 1,
@@ -202,7 +202,7 @@
           {
             "InputName": "model-data",
             "S3Input": {
-              "S3Uri": "s3://consumer-electronics-mlops/models/TrainDemandModel-${SageMaker.ExecutionId}/output/model.tar.gz",
+              "S3Uri": "s3://consumer-electronics-mlops-533267153786/models/TrainDemandModel-${SageMaker.ExecutionId}/output/model.tar.gz",
               "LocalPath": "/opt/ml/processing/model",
               "S3DataType": "S3Prefix",
               "S3InputMode": "File"
@@ -211,7 +211,7 @@
           {
             "InputName": "test-data",
             "S3Input": {
-              "S3Uri": "s3://consumer-electronics-mlops/processed/test",
+              "S3Uri": "s3://consumer-electronics-mlops-533267153786/processed/test",
               "LocalPath": "/opt/ml/processing/test",
               "S3DataType": "S3Prefix",
               "S3InputMode": "File"
@@ -220,7 +220,7 @@
           {
             "InputName": "code",
             "S3Input": {
-              "S3Uri": "s3://consumer-electronics-mlops/code/evaluate.py",
+              "S3Uri": "s3://consumer-electronics-mlops-533267153786/code/evaluate.py",
               "LocalPath": "/opt/ml/processing/input/code",
               "S3DataType": "S3Prefix",
               "S3InputMode": "File"
@@ -232,7 +232,7 @@
             {
               "OutputName": "evaluation",
               "S3Output": {
-                "S3Uri": "s3://consumer-electronics-mlops/evaluation",
+                "S3Uri": "s3://consumer-electronics-mlops-533267153786/evaluation",
                 "LocalPath": "/opt/ml/processing/evaluation",
                 "S3UploadMode": "EndOfJob"
               }
@@ -284,7 +284,7 @@
                 "Containers": [
                   {
                     "Image": "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-xgboost:1.5-1",
-                    "ModelDataUrl": "s3://consumer-electronics-mlops/models/TrainDemandModel-${SageMaker.ExecutionId}/output/model.tar.gz"
+                    "ModelDataUrl": "s3://consumer-electronics-mlops-533267153786/models/TrainDemandModel-${SageMaker.ExecutionId}/output/model.tar.gz"
                   }
                 ],
                 "SupportedContentTypes": [
