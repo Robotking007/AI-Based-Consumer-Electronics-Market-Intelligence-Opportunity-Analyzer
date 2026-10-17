@@ -4,3 +4,5 @@ scikit-learn>=1.2.0
 xgboost>=1.6.0
 boto3>=1.26.0
 nltk>=3.7
+pytest>=7.0.0
+
