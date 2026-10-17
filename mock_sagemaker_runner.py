@@ -52,7 +52,7 @@ class MockSageMakerPipelineExecutor:
 
         self.pipeline_name = self.pipeline_def.get("Metadata", {}).get("PipelineName", "Mock-SageMaker-Pipeline")
         self.execution_id = f"exec-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{int(time.time()*1000) % 100000}"
-        self.execution_arn = f"arn:aws:sagemaker:ap-south-1:123456789012:pipeline/{self.pipeline_name}/execution/{self.execution_id}"
+        self.execution_arn = f"arn:aws:sagemaker:ap-south-1:533267153786:pipeline/{self.pipeline_name}/execution/{self.execution_id}"
         
         self.run_dir = os.path.join(self.output_root, self.execution_id)
         os.makedirs(self.run_dir, exist_ok=True)
@@ -363,7 +363,7 @@ class MockSageMakerPipelineExecutor:
         model_tar = self.step_outputs.get("TrainDemandGrowthModel", {}).get("model_tar_gz")
 
         registry_entry = {
-            "ModelPackageArn": f"arn:aws:sagemaker:ap-south-1:123456789012:model-package/{group_name}/1",
+            "ModelPackageArn": f"arn:aws:sagemaker:ap-south-1:533267153786:model-package/{group_name}/1",
             "ModelPackageGroupName": group_name,
             "ModelPackageVersion": 1,
             "ModelApprovalStatus": approval_status,
