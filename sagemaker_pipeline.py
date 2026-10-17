@@ -327,45 +327,100 @@ def create_pipeline_definition(
     return pipeline_dict
 
 
+def check_aws_credentials() -> bool:
+    """Validate active AWS credentials."""
+    if not BOTO3_AVAILABLE:
+        print("[AWS Check] boto3 is not installed.")
+        return False
+    try:
+        sts = boto3.client("sts")
+        identity = sts.get_caller_identity()
+        print(f"[AWS Check] Authenticated as ARN: {identity.get('Arn')} (Account: {identity.get('Account')})")
+        return True
+    except (NoCredentialsError, ClientError, Exception) as e:
+        print(f"[AWS Check] No active AWS credentials found: {e}")
+        print("To authenticate for AWS SageMaker deployment:")
+        print("  1. Run 'aws configure' in terminal or PowerShell")
+        print("  2. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_DEFAULT_REGION")
+        return False
+
+
 def save_and_deploy_pipeline(
     bucket_name: str = "consumer-electronics-mlops",
     role_arn: str = None,
-    output_json: str = "pipeline_definition.json"
+    output_json: str = "pipeline_definition.json",
+    region: str = "ap-south-1",
+    trigger_execution: bool = False
 ):
+    print("\n" + "="*70)
+    print(" AWS SAGEMAKER PIPELINE DEPLOYMENT GENERATOR")
+    print("="*70)
     print("Generating AWS SageMaker Pipeline Definition...")
-    pipeline_def = create_pipeline_definition(bucket_name=bucket_name)
+    pipeline_def = create_pipeline_definition(bucket_name=bucket_name, role_arn=role_arn or "arn:aws:iam::123456789012:role/service-role/AmazonSageMaker-ExecutionRole", region=region)
 
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(pipeline_def, f, indent=2)
 
-    print(f"SageMaker Pipeline Definition saved to: {output_json}")
-    print(f"Pipeline Name: {pipeline_def['Metadata']['PipelineName']}")
-    print(f"Configured Steps: {[s['Name'] for s in pipeline_def['Steps']]}")
+    print(f" SageMaker Pipeline Definition saved to : {output_json}")
+    print(f" Pipeline Name                          : {pipeline_def['Metadata']['PipelineName']}")
+    print(f" Configured Pipeline Steps              : {[s['Name'] for s in pipeline_def['Steps']]}")
 
-    if BOTO3_AVAILABLE and role_arn:
+    # AWS Cloud Deployment Workflow
+    has_aws = check_aws_credentials()
+    if has_aws and role_arn:
         try:
-            sm_client = boto3.client("sagemaker")
-            print(f"\nSubmitting Pipeline definition to AWS SageMaker in ap-south-1...")
+            s3_client = boto3.client("s3", region_name=region)
+            sm_client = boto3.client("sagemaker", region_name=region)
+
+            # 1. Sync code dependencies to S3
+            print(f"\n[S3 Sync] Uploading pipeline scripts to s3://{bucket_name}/code/...")
+            for script in ["preprocessing.py", "evaluate.py"]:
+                if os.path.exists(script):
+                    s3_client.upload_file(script, bucket_name, f"code/{script}")
+                    print(f" - Uploaded: s3://{bucket_name}/code/{script}")
+
+            # 2. Upsert Pipeline on AWS SageMaker
+            print(f"\n[SageMaker] Upserting Pipeline '{pipeline_def['Metadata']['PipelineName']}' in region {region}...")
             response = sm_client.upsert_pipeline(
                 PipelineName=pipeline_def["Metadata"]["PipelineName"],
                 PipelineDefinition=json.dumps(pipeline_def),
                 PipelineDescription=pipeline_def["Metadata"]["Description"],
                 RoleArn=role_arn
             )
-            print(f"SageMaker Pipeline successfully upserted on AWS! ARN: {response.get('PipelineArn')}")
+            pipeline_arn = response.get("PipelineArn")
+            print(f" [SUCCESS] SageMaker Pipeline upserted! ARN: {pipeline_arn}")
+
+            # 3. Optional trigger
+            if trigger_execution:
+                print(f"[SageMaker] Starting AWS Pipeline Execution...")
+                exec_res = sm_client.start_pipeline_execution(
+                    PipelineName=pipeline_def["Metadata"]["PipelineName"],
+                    PipelineExecutionDisplayName=f"exec-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+                )
+                print(f" [SUCCESS] Started Execution ARN: {exec_res.get('PipelineExecutionArn')}")
+
         except Exception as e:
-            print(f"AWS Submission note: {e}")
+            print(f"[AWS Error] Failed during SageMaker deployment: {e}")
+    else:
+        print("\n[NOTE] Running in offline / mock mode.")
+        print(f" Pipeline specification is validated and saved locally as '{output_json}'.")
+        print(" To deploy to real AWS SageMaker when ready, provide:")
+        print(f"   python sagemaker_pipeline.py --bucket <your-s3-bucket> --role-arn <your-sagemaker-role-arn> --execute\n")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--bucket", default="consumer-electronics-mlops", help="Target S3 Bucket")
     parser.add_argument("--role-arn", default=None, help="SageMaker Execution Role ARN")
+    parser.add_argument("--region", default="ap-south-1", help="AWS Region")
     parser.add_argument("--output", default="pipeline_definition.json", help="Output JSON definition file")
+    parser.add_argument("--execute", action="store_true", help="Trigger execution immediately after upsert")
 
     args = parser.parse_args()
     save_and_deploy_pipeline(
         bucket_name=args.bucket,
         role_arn=args.role_arn,
-        output_json=args.output
+        output_json=args.output,
+        region=args.region,
+        trigger_execution=args.execute
     )
