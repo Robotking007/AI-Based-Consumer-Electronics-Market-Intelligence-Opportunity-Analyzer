@@ -1,0 +1,134 @@
+name: MLOps CI/CD Pipeline (SageMaker Mock & Cloud Deployment)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      deploy_to_aws:
+        description: 'Deploy & trigger pipeline on AWS SageMaker'
+        required: false
+        type: boolean
+        default: false
+      s3_bucket:
+        description: 'Target AWS S3 Bucket Name'
+        required: false
+        default: 'consumer-electronics-mlops'
+      aws_region:
+        description: 'AWS Region'
+        required: false
+        default: 'ap-south-1'
+      rmse_threshold:
+        description: 'Quality Gate RMSE Threshold'
+        required: false
+        default: '12.0'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test_and_validate:
+    name: 1. Validate Dataset & Run Pipeline Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download NLTK Lexicon
+        run: |
+          python -c "import nltk; nltk.download('vader_lexicon', quiet=True)"
+
+      - name: Validate Dataset Schema & Integrity
+        run: |
+          python verify_dataset.py
+
+      - name: Run SageMaker Pipeline Test Suite (pytest)
+        run: |
+          pytest test_mock_pipeline.py -v
+
+  mock_sagemaker_e2e:
+    name: 2. Local SageMaker Pipeline Mock E2E Execution
+    needs: test_and_validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download NLTK Lexicon
+        run: |
+          python -c "import nltk; nltk.download('vader_lexicon', quiet=True)"
+
+      - name: Execute Full Mock SageMaker Pipeline
+        run: |
+          python run_pipeline.py --mode mock --sample-limit 2000
+
+      - name: Archive Pipeline Execution Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagemaker-execution-summary
+          path: |
+            pipeline_definition.json
+            mock_sagemaker_runs/latest_execution.json
+
+  deploy_to_aws_sagemaker:
+    name: 3. Deploy & Trigger AWS SageMaker Pipeline
+    needs: mock_sagemaker_e2e
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && (github.event.inputs.deploy_to_aws == true || vars.AUTO_DEPLOY_TO_AWS == 'true')
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.aws_region || 'ap-south-1' }}
+
+      - name: Deploy Pipeline Definition & Code to AWS S3 & SageMaker
+        run: |
+          python run_pipeline.py --mode cloud \
+            --bucket "${{ github.event.inputs.s3_bucket || secrets.S3_BUCKET_NAME || 'consumer-electronics-mlops' }}" \
+            --role-arn "${{ secrets.SAGEMAKER_ROLE_ARN }}" \
+            --region "${{ github.event.inputs.aws_region || 'ap-south-1' }}" \
+            --execute
