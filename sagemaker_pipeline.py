@@ -23,8 +23,8 @@ except ImportError:
 
 
 def create_pipeline_definition(
-    bucket_name: str = "consumer-electronics-mlops",
-    role_arn: str = "arn:aws:iam::123456789012:role/service-role/AmazonSageMaker-ExecutionRole",
+    bucket_name: str = "consumer-electronics-mlops-533267153786",
+    role_arn: str = "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole",
     region: str = "ap-south-1",
     rmse_threshold: float = 12.0
 ) -> dict:
@@ -356,7 +356,7 @@ def save_and_deploy_pipeline(
     print(" AWS SAGEMAKER PIPELINE DEPLOYMENT GENERATOR")
     print("="*70)
     print("Generating AWS SageMaker Pipeline Definition...")
-    pipeline_def = create_pipeline_definition(bucket_name=bucket_name, role_arn=role_arn or "arn:aws:iam::123456789012:role/service-role/AmazonSageMaker-ExecutionRole", region=region)
+    pipeline_def = create_pipeline_definition(bucket_name=bucket_name, role_arn=role_arn or "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole", region=region)
 
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(pipeline_def, f, indent=2)
