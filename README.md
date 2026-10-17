@@ -62,6 +62,8 @@ SERVE    SageMaker Endpoint → API Gateway (+Lambda) → Dashboard → CloudWat
 ├── train_xgboost.py                     # SageMaker XGBoost training step
 ├── evaluate.py                          # Evaluation step producing evaluation.json
 ├── sagemaker_pipeline.py                # AWS SageMaker Pipeline DAG JSON definition
+├── mock_sagemaker_runner.py             # Local SageMaker Pipeline simulator & DAG executor
+├── test_mock_pipeline.py                # Automated pytest suite for mock pipeline & quality gate
 ├── run_pipeline.py                      # Master MLOps pipeline orchestrator
 ├── verify_dataset.py                    # Dataset validation and integrity check
 ├── generate_dataset.py                  # Dataset generation and consolidation script
@@ -79,23 +81,39 @@ SERVE    SageMaker Endpoint → API Gateway (+Lambda) → Dashboard → CloudWat
 pip install -r requirements.txt
 ```
 
-### Run the Complete MLOps Pipeline Locally
-Executes all 5 stages end-to-end (Ingestion -> Feature Engineering -> Training -> Evaluation -> Quality Gate -> Demo):
+### Phase 1: Local SageMaker Mock & Automated Testing
+
+#### 1. Run Automated Test Suite (pytest)
+Validates DAG schema, ConditionStep branching (approval vs rejection), and model inference:
 ```bash
-python run_pipeline.py --local
+pytest test_mock_pipeline.py -v
 ```
 
-### Deploy to AWS S3 & SageMaker
+#### 2. Run Local SageMaker Pipeline Simulator
+Executes all 5 SageMaker steps locally with mock container paths, property files, and quality gate:
 ```bash
-python run_pipeline.py --bucket <your-s3-bucket> --role-arn <your-sagemaker-role-arn>
+python run_pipeline.py --mode mock
 ```
+*Tip: To run a fast test with sample limit, use `python run_pipeline.py --mode mock --sample-limit 1000`.*
 
-### Validate Dataset Integrity
+#### 3. Test Quality Gate Rejection Branch
+Simulates a scenario where challenger model fails quality criteria (e.g. RMSE threshold = 0.5):
 ```bash
-python verify_dataset.py
+python mock_sagemaker_runner.py --force-fail --sample-limit 1000
 ```
 
 ---
+
+### Phase 2: Deploy to AWS SageMaker (Cloud)
+
+Once local testing passes, submit and execute the pipeline directly on AWS:
+```bash
+# Set your AWS credentials
+aws configure
+
+# Deploy & trigger pipeline execution on AWS SageMaker
+python run_pipeline.py --mode cloud --bucket <your-s3-bucket> --role-arn <your-sagemaker-role-arn> --region ap-south-1 --execute
+```
 
 ## 6. Model Evaluation Results
 
@@ -105,3 +123,19 @@ python verify_dataset.py
 | **MAE** | **2.04** | < 10.00 | **Low Average Error** |
 | **R² Score** | **0.902** | > 0.80 | **High Variance Explained** |
 | **Relative Error** | **9.1%** | < 15.0% | **Production-Ready** |
+
+---
+
+## 7. CI/CD Automation (GitHub Actions)
+
+The repository includes a production MLOps CI/CD workflow ([`.github/workflows/ci_cd_pipeline.yml`](.github/workflows/ci_cd_pipeline.yml)) with 3 stages:
+1. **Validation & Unit Testing**: Verifies dataset schema integrity (`verify_dataset.py`) and runs pytest test suite (`test_mock_pipeline.py`) across all DAG condition branches.
+2. **Mock SageMaker E2E**: Executes the full 5-stage pipeline locally inside GitHub Actions runner and archives execution summaries.
+3. **AWS Cloud Deployment**: Triggered on push to `main` with AWS credentials configured, uploading code to S3 and upserting the SageMaker Pipeline.
+
+---
+
+## 8. License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+
