@@ -94,11 +94,20 @@ class MockSageMakerPipelineExecutor:
         if isinstance(expr, dict):
             if "Std:JsonGet" in expr:
                 jg = expr["Std:JsonGet"]
-                step_name = jg.get("StepName")
-                prop_file = jg.get("PropertyFile")
-                sub_path = jg.get("Path", "").split(".")
-                cur = self.step_properties.get(step_name, {}).get(prop_file, {})
-                for key in sub_path:
+                prop_file_ref = jg.get("PropertyFile")
+                if isinstance(prop_file_ref, dict) and "Get" in prop_file_ref:
+                    # Format: Steps.EvaluateChallengerModel.PropertyFiles.EvaluationReport
+                    parts = prop_file_ref["Get"].split(".")
+                    step_name = parts[1]
+                    prop_file_name = parts[3]
+                else:
+                    step_name = jg.get("StepName", "EvaluateChallengerModel")
+                    prop_file_name = str(prop_file_ref)
+
+                json_path = jg.get("JsonPath", jg.get("Path", ""))
+                sub_keys = json_path.split(".")
+                cur = self.step_properties.get(step_name, {}).get(prop_file_name, {})
+                for key in sub_keys:
                     if isinstance(cur, dict) and key in cur:
                         cur = cur[key]
                     else:
