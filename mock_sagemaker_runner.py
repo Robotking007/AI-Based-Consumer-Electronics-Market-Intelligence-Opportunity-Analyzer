@@ -92,6 +92,19 @@ class MockSageMakerPipelineExecutor:
         - String interpolation: ${SageMaker.ExecutionId}
         """
         if isinstance(expr, dict):
+            if "Std:JsonGet" in expr:
+                jg = expr["Std:JsonGet"]
+                step_name = jg.get("StepName")
+                prop_file = jg.get("PropertyFile")
+                sub_path = jg.get("Path", "").split(".")
+                cur = self.step_properties.get(step_name, {}).get(prop_file, {})
+                for key in sub_path:
+                    if isinstance(cur, dict) and key in cur:
+                        cur = cur[key]
+                    else:
+                        return None
+                return cur
+
             if "Get" in expr:
                 path = expr["Get"]
                 if path.startswith("Parameters."):
