@@ -263,8 +263,8 @@ class MockSageMakerPipelineExecutor:
         self.step_outputs[step_name] = {
             "model_dir": model_dir,
             "model_tar_gz": tar_path,
-            "val_rmse": val_rmse,
-            "val_mae": val_mae
+            "val_rmse": float(val_rmse),
+            "val_mae": float(val_mae)
         }
 
         duration = round(time.time() - start_time, 2)
@@ -277,8 +277,8 @@ class MockSageMakerPipelineExecutor:
             "DurationSeconds": duration,
             "Outputs": {
                 "ModelArtifact": tar_path,
-                "ValidationRMSE": val_rmse,
-                "ValidationMAE": val_mae
+                "ValidationRMSE": float(val_rmse),
+                "ValidationMAE": float(val_mae)
             }
         }
 
@@ -454,12 +454,12 @@ class MockSageMakerPipelineExecutor:
 
             summary_file = os.path.join(self.run_dir, "execution_summary.json")
             with open(summary_file, "w", encoding="utf-8") as f:
-                json.dump(summary, f, indent=2)
+                json.dump(summary, f, indent=2, default=str)
 
             # Also maintain a latest pointer
             latest_file = os.path.join(self.output_root, "latest_execution.json")
             with open(latest_file, "w", encoding="utf-8") as f:
-                json.dump(summary, f, indent=2)
+                json.dump(summary, f, indent=2, default=str)
 
             print("\n" + "="*75)
             print(f" SAGEMAKER PIPELINE EXECUTION COMPLETED: {pipeline_status.upper()}")
