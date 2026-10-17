@@ -43,7 +43,10 @@ test_processed_data/
 test_model_output/
 test_evaluation_output/
 
-# OS
-.DS_Store
-Thumbs.db
+# Secrets and environment configs
+.env
+*.env
+.aws/
+credentials.csv
+
 
