@@ -284,7 +284,7 @@ def create_pipeline_definition(
                 {
                     "Type": "LessThanOrEqualTo",
                     "LeftValue": {
-                        "Get": "Steps.EvaluateChallengerModel.OutputProperties.EvaluationReport.regression_metrics.rmse.value"
+                        "Get": "Steps.EvaluateChallengerModel.PropertyFiles.EvaluationReport.regression_metrics.rmse.value"
                     },
                     "RightValue": {"Get": "Parameters.RmseThreshold"}
                 }
