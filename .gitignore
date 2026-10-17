@@ -37,7 +37,10 @@ mock_s3_storage/
 processed_data/
 model_output/
 evaluation_output/
+mock_sagemaker_runs/
+mock_sagemaker_test_runs/
 
 # OS
 .DS_Store
 Thumbs.db
+
