@@ -3,7 +3,7 @@
   "Metadata": {
     "PipelineName": "ConsumerElectronics-DemandGrowth-Pipeline",
     "Description": "End-to-End MLOps Pipeline for Consumer Electronics Market Intelligence (Group 10)",
-    "LastModified": "2026-10-17T18:27:42.184845"
+    "LastModified": "2026-10-17T18:37:34.829200"
   },
   "Parameters": [
     {
@@ -45,7 +45,7 @@
             "/opt/ml/processing/input/code/preprocessing.py"
           ]
         },
-        "RoleArn": "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole",
+        "RoleArn": "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole-20260930T161232",
         "ProcessingResources": {
           "ClusterConfig": {
             "InstanceCount": 1,
@@ -124,7 +124,7 @@
           "TrainingImage": "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-xgboost:1.5-1",
           "TrainingInputMode": "File"
         },
-        "RoleArn": "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole",
+        "RoleArn": "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole-20260930T161232",
         "HyperParameters": {
           "max_depth": "6",
           "eta": "0.08",
@@ -188,7 +188,7 @@
             "/opt/ml/processing/input/code/evaluate.py"
           ]
         },
-        "RoleArn": "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole",
+        "RoleArn": "arn:aws:iam::533267153786:role/service-role/AmazonSageMaker-ExecutionRole-20260930T161232",
         "ProcessingResources": {
           "ClusterConfig": {
             "InstanceCount": 1,
