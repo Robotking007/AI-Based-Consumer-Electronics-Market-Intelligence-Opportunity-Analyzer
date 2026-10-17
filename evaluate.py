@@ -25,13 +25,19 @@ def evaluate(model_dir: str, test_path: str, output_dir: str) -> dict:
     X_test = test_df.iloc[:, 1:].values
 
     # Locate model file (extracted or inside tar)
-    raw_model_path = os.path.join(model_dir, "xgboost-model")
+    raw_model_path = os.path.join(model_dir, "xgboost-model.json")
+    if not os.path.exists(raw_model_path):
+        raw_model_path = os.path.join(model_dir, "xgboost-model")
     tar_model_path = os.path.join(model_dir, "model.tar.gz")
 
     if not os.path.exists(raw_model_path) and os.path.exists(tar_model_path):
         print(f"Extracting model from: {tar_model_path}...")
         with tarfile.open(tar_model_path, "r:gz") as tar:
             tar.extractall(path=model_dir)
+        if os.path.exists(os.path.join(model_dir, "xgboost-model.json")):
+            raw_model_path = os.path.join(model_dir, "xgboost-model.json")
+        else:
+            raw_model_path = os.path.join(model_dir, "xgboost-model")
 
     model = xgb.XGBRegressor()
     model.load_model(raw_model_path)
