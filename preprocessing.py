@@ -197,10 +197,12 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def run_preprocessing(input_csv: str, output_dir: str):
+def run_preprocessing(input_csv: str, output_dir: str, sample_limit: int = None):
     """Full preprocessing pipeline entrypoint."""
     os.makedirs(output_dir, exist_ok=True)
     df_raw = pd.read_csv(input_csv)
+    if sample_limit and sample_limit < len(df_raw):
+        df_raw = df_raw.head(sample_limit).copy()
     print(f"Loaded raw dataset with {len(df_raw):,} records.")
 
     featured_df = engineer_features(df_raw)
@@ -281,6 +283,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="SageMaker Preprocessing & Feature Engineering Step")
     parser.add_argument("--input-data", default="consumer_electronics_market_20k.csv", help="Input CSV path")
     parser.add_argument("--output-dir", default="processed_data", help="Output directory")
+    parser.add_argument("--sample-limit", type=int, default=None, help="Optional sample limit for fast testing")
     args = parser.parse_args()
 
-    run_preprocessing(args.input_data, args.output_dir)
+    run_preprocessing(args.input_data, args.output_dir, sample_limit=args.sample_limit)
