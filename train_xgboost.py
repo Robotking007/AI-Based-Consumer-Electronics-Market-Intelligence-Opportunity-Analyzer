@@ -58,14 +58,24 @@ def train(
     )
 
     # Save model
-    model_file = os.path.join(output_dir, "xgboost-model")
+    model_file = os.path.join(output_dir, "xgboost-model.json")
     model.save_model(model_file)
     print(f"\nSaved raw XGBoost model to: {model_file}")
+
+    # Also keep legacy xgboost-model link/copy for backward compatibility
+    legacy_file = os.path.join(output_dir, "xgboost-model")
+    try:
+        import shutil
+        shutil.copy2(model_file, legacy_file)
+    except Exception:
+        pass
 
     # Also save as SageMaker compatible model.tar.gz
     tar_path = os.path.join(output_dir, "model.tar.gz")
     with tarfile.open(tar_path, "w:gz") as tar:
-        tar.add(model_file, arcname="xgboost-model")
+        tar.add(model_file, arcname="xgboost-model.json")
+        if os.path.exists(legacy_file):
+            tar.add(legacy_file, arcname="xgboost-model")
     print(f"Packaged SageMaker model artifact: {tar_path}")
 
     # Evaluate validation metrics
