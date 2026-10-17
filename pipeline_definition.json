@@ -1,0 +1,300 @@
+{
+  "Version": "2020-12-01",
+  "Metadata": {
+    "PipelineName": "ConsumerElectronics-DemandGrowth-Pipeline",
+    "Description": "End-to-End MLOps Pipeline for Consumer Electronics Market Intelligence (Group 10)",
+    "LastModified": "2026-10-17T17:16:20.626905"
+  },
+  "Parameters": [
+    {
+      "Name": "InputDataUrl",
+      "Type": "String",
+      "DefaultValue": "s3://consumer-electronics-mlops/raw/date=2026-10-17/consumer_electronics_market_20k.csv"
+    },
+    {
+      "Name": "ProcessingInstanceType",
+      "Type": "String",
+      "DefaultValue": "ml.t3.medium"
+    },
+    {
+      "Name": "TrainingInstanceType",
+      "Type": "String",
+      "DefaultValue": "ml.m5.xlarge"
+    },
+    {
+      "Name": "RmseThreshold",
+      "Type": "Float",
+      "DefaultValue": 12.0
+    },
+    {
+      "Name": "ModelApprovalStatus",
+      "Type": "String",
+      "DefaultValue": "Approved"
+    }
+  ],
+  "Steps": [
+    {
+      "Name": "PreprocessMarketData",
+      "Type": "Processing",
+      "Arguments": {
+        "ProcessingJobName": "PreprocessMarketData-${SageMaker.ExecutionId}",
+        "AppSpecification": {
+          "ImageUri": "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-scikit-learn:1.2-1-cpu-py3",
+          "ContainerEntrypoint": [
+            "python3",
+            "/opt/ml/processing/input/code/preprocessing.py"
+          ]
+        },
+        "RoleArn": "arn:aws:iam::123456789012:role/service-role/AmazonSageMaker-ExecutionRole",
+        "ProcessingResources": {
+          "ClusterConfig": {
+            "InstanceCount": 1,
+            "InstanceType": {
+              "Get": "Parameters.ProcessingInstanceType"
+            },
+            "VolumeSizeInGB": 20
+          }
+        },
+        "ProcessingInputs": [
+          {
+            "InputName": "raw-data",
+            "AppManaged": false,
+            "S3Input": {
+              "S3Uri": {
+                "Get": "Parameters.InputDataUrl"
+              },
+              "LocalPath": "/opt/ml/processing/input",
+              "S3DataType": "S3Prefix",
+              "S3InputMode": "File"
+            }
+          },
+          {
+            "InputName": "code",
+            "AppManaged": false,
+            "S3Input": {
+              "S3Uri": "s3://consumer-electronics-mlops/code/preprocessing.py",
+              "LocalPath": "/opt/ml/processing/input/code",
+              "S3DataType": "S3Prefix",
+              "S3InputMode": "File"
+            }
+          }
+        ],
+        "ProcessingOutputConfig": {
+          "Outputs": [
+            {
+              "OutputName": "train",
+              "AppManaged": false,
+              "S3Output": {
+                "S3Uri": "s3://consumer-electronics-mlops/processed/train",
+                "LocalPath": "/opt/ml/processing/output/train",
+                "S3UploadMode": "EndOfJob"
+              }
+            },
+            {
+              "OutputName": "validation",
+              "AppManaged": false,
+              "S3Output": {
+                "S3Uri": "s3://consumer-electronics-mlops/processed/validation",
+                "LocalPath": "/opt/ml/processing/output/validation",
+                "S3UploadMode": "EndOfJob"
+              }
+            },
+            {
+              "OutputName": "test",
+              "AppManaged": false,
+              "S3Output": {
+                "S3Uri": "s3://consumer-electronics-mlops/processed/test",
+                "LocalPath": "/opt/ml/processing/output/test",
+                "S3UploadMode": "EndOfJob"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "Name": "TrainDemandGrowthModel",
+      "Type": "Training",
+      "DependsOn": [
+        "PreprocessMarketData"
+      ],
+      "Arguments": {
+        "TrainingJobName": "TrainDemandModel-${SageMaker.ExecutionId}",
+        "AlgorithmSpecification": {
+          "TrainingImage": "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-xgboost:1.5-1",
+          "TrainingInputMode": "File"
+        },
+        "RoleArn": "arn:aws:iam::123456789012:role/service-role/AmazonSageMaker-ExecutionRole",
+        "HyperParameters": {
+          "max_depth": "6",
+          "eta": "0.08",
+          "num_round": "150",
+          "subsample": "0.85",
+          "colsample_bytree": "0.85",
+          "objective": "reg:squarederror",
+          "eval_metric": "rmse"
+        },
+        "InputDataConfig": [
+          {
+            "ChannelName": "train",
+            "DataSource": {
+              "S3DataSource": {
+                "S3DataType": "S3Prefix",
+                "S3Uri": "s3://consumer-electronics-mlops/processed/train",
+                "S3DataDistributionType": "FullyReplicated"
+              }
+            },
+            "ContentType": "text/csv"
+          },
+          {
+            "ChannelName": "validation",
+            "DataSource": {
+              "S3DataSource": {
+                "S3DataType": "S3Prefix",
+                "S3Uri": "s3://consumer-electronics-mlops/processed/validation",
+                "S3DataDistributionType": "FullyReplicated"
+              }
+            },
+            "ContentType": "text/csv"
+          }
+        ],
+        "OutputDataConfig": {
+          "S3OutputPath": "s3://consumer-electronics-mlops/models"
+        },
+        "ResourceConfig": {
+          "InstanceCount": 1,
+          "InstanceType": {
+            "Get": "Parameters.TrainingInstanceType"
+          },
+          "VolumeSizeInGB": 20
+        },
+        "StoppingCondition": {
+          "MaxRuntimeInSeconds": 3600
+        }
+      }
+    },
+    {
+      "Name": "EvaluateChallengerModel",
+      "Type": "Processing",
+      "DependsOn": [
+        "TrainDemandGrowthModel"
+      ],
+      "Arguments": {
+        "ProcessingJobName": "EvaluateChallenger-${SageMaker.ExecutionId}",
+        "AppSpecification": {
+          "ImageUri": "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-scikit-learn:1.2-1-cpu-py3",
+          "ContainerEntrypoint": [
+            "python3",
+            "/opt/ml/processing/input/code/evaluate.py"
+          ]
+        },
+        "RoleArn": "arn:aws:iam::123456789012:role/service-role/AmazonSageMaker-ExecutionRole",
+        "ProcessingResources": {
+          "ClusterConfig": {
+            "InstanceCount": 1,
+            "InstanceType": {
+              "Get": "Parameters.ProcessingInstanceType"
+            },
+            "VolumeSizeInGB": 10
+          }
+        },
+        "ProcessingInputs": [
+          {
+            "InputName": "model-data",
+            "S3Input": {
+              "S3Uri": "s3://consumer-electronics-mlops/models/TrainDemandModel-${SageMaker.ExecutionId}/output/model.tar.gz",
+              "LocalPath": "/opt/ml/processing/model",
+              "S3DataType": "S3Prefix",
+              "S3InputMode": "File"
+            }
+          },
+          {
+            "InputName": "test-data",
+            "S3Input": {
+              "S3Uri": "s3://consumer-electronics-mlops/processed/test",
+              "LocalPath": "/opt/ml/processing/test",
+              "S3DataType": "S3Prefix",
+              "S3InputMode": "File"
+            }
+          },
+          {
+            "InputName": "code",
+            "S3Input": {
+              "S3Uri": "s3://consumer-electronics-mlops/code/evaluate.py",
+              "LocalPath": "/opt/ml/processing/input/code",
+              "S3DataType": "S3Prefix",
+              "S3InputMode": "File"
+            }
+          }
+        ],
+        "ProcessingOutputConfig": {
+          "Outputs": [
+            {
+              "OutputName": "evaluation",
+              "S3Output": {
+                "S3Uri": "s3://consumer-electronics-mlops/evaluation",
+                "LocalPath": "/opt/ml/processing/evaluation",
+                "S3UploadMode": "EndOfJob"
+              }
+            }
+          ]
+        }
+      },
+      "PropertyFiles": [
+        {
+          "PropertyFileName": "EvaluationReport",
+          "OutputName": "evaluation",
+          "FilePath": "evaluation.json"
+        }
+      ]
+    },
+    {
+      "Name": "QualityGate-Condition",
+      "Type": "Condition",
+      "DependsOn": [
+        "EvaluateChallengerModel"
+      ],
+      "Arguments": {
+        "Conditions": [
+          {
+            "Type": "LessThanOrEqualTo",
+            "LeftValue": {
+              "Get": "Steps.EvaluateChallengerModel.OutputProperties.EvaluationReport.regression_metrics.rmse.value"
+            },
+            "RightValue": {
+              "Get": "Parameters.RmseThreshold"
+            }
+          }
+        ],
+        "IfSteps": [
+          {
+            "Name": "RegisterApprovedChallengerModel",
+            "Type": "RegisterModel",
+            "Arguments": {
+              "ModelPackageGroupName": "ConsumerElectronicsDemandGrowth",
+              "ModelApprovalStatus": {
+                "Get": "Parameters.ModelApprovalStatus"
+              },
+              "InferenceSpecification": {
+                "Containers": [
+                  {
+                    "Image": "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-xgboost:1.5-1",
+                    "ModelDataUrl": "s3://consumer-electronics-mlops/models/TrainDemandModel-${SageMaker.ExecutionId}/output/model.tar.gz"
+                  }
+                ],
+                "SupportedContentTypes": [
+                  "text/csv"
+                ],
+                "SupportedResponseMIMETypes": [
+                  "text/csv",
+                  "application/json"
+                ]
+              }
+            }
+          }
+        ],
+        "ElseSteps": []
+      }
+    }
+  ]
+}
