@@ -284,7 +284,11 @@ def create_pipeline_definition(
                 {
                     "Type": "LessThanOrEqualTo",
                     "LeftValue": {
-                        "Get": "Steps.EvaluateChallengerModel.PropertyFiles.EvaluationReport.regression_metrics.rmse.value"
+                        "Std:JsonGet": {
+                            "StepName": "EvaluateChallengerModel",
+                            "PropertyFile": "EvaluationReport",
+                            "Path": "regression_metrics.rmse.value"
+                        }
                     },
                     "RightValue": {"Get": "Parameters.RmseThreshold"}
                 }
