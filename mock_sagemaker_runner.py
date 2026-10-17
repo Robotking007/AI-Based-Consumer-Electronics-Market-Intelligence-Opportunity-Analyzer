@@ -101,7 +101,7 @@ class MockSageMakerPipelineExecutor:
                     # Format: Steps.<StepName>.OutputProperties.<PropName>.<json_path>
                     parts = path.split(".")
                     step_name = parts[1]
-                    if parts[2] == "OutputProperties":
+                    if parts[2] in ["OutputProperties", "PropertyFiles"]:
                         prop_name = parts[3]
                         json_subpath = parts[4:]
                         cur = self.step_properties.get(step_name, {}).get(prop_name, {})
