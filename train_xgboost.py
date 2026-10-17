@@ -90,10 +90,24 @@ def train(
         verbose=30
     )
 
-    # Save model
+    import pickle
+    import joblib
+
+    # 1. Save standard Scikit-Learn Joblib format (.joblib)
+    joblib_path = os.path.join(output_dir, "model.joblib")
+    joblib.dump(model, joblib_path)
+    print(f"\nSaved Scikit-Learn Joblib model to: {joblib_path}")
+
+    # 2. Save Python Pickle format (.pkl)
+    pkl_path = os.path.join(output_dir, "model.pkl")
+    with open(pkl_path, "wb") as f:
+        pickle.dump(model, f)
+    print(f"Saved Python Pickle model to: {pkl_path}")
+
+    # 3. Save raw XGBoost JSON model for SageMaker container
     model_file = os.path.join(output_dir, "xgboost-model.json")
     model.save_model(model_file)
-    print(f"\nSaved raw XGBoost model to: {model_file}")
+    print(f"Saved raw XGBoost JSON model to: {model_file}")
 
     # Also keep legacy xgboost-model link/copy for backward compatibility
     legacy_file = os.path.join(output_dir, "xgboost-model")
@@ -103,18 +117,20 @@ def train(
     except Exception:
         pass
 
-    # Also save as SageMaker compatible model.tar.gz
+    # Package all formats into SageMaker compatible model.tar.gz
     tar_path = os.path.join(output_dir, "model.tar.gz")
     with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(joblib_path, arcname="model.joblib")
+        tar.add(pkl_path, arcname="model.pkl")
         tar.add(model_file, arcname="xgboost-model.json")
         if os.path.exists(legacy_file):
             tar.add(legacy_file, arcname="xgboost-model")
-    print(f"Packaged SageMaker model artifact: {tar_path}")
+    print(f"Packaged SageMaker model artifact (.joblib, .pkl, .json): {tar_path}")
 
     # Evaluate validation metrics
     val_preds = model.predict(X_val)
-    val_rmse = np.sqrt(np.mean((val_preds - y_val) ** 2))
-    val_mae = np.mean(np.abs(val_preds - y_val))
+    val_rmse = float(np.sqrt(np.mean((val_preds - y_val) ** 2)))
+    val_mae = float(np.mean(np.abs(val_preds - y_val)))
     print(f"\nValidation Performance -> RMSE: {val_rmse:.3f} | MAE: {val_mae:.3f}")
 
     return model, val_rmse, val_mae
