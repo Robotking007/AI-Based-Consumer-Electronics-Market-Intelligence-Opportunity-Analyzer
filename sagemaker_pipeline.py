@@ -288,7 +288,7 @@ def create_pipeline_definition(
                             "PropertyFile": {
                                 "Get": "Steps.EvaluateChallengerModel.PropertyFiles.EvaluationReport"
                             },
-                            "JsonPath": "regression_metrics.rmse.value"
+                            "Path": "regression_metrics.rmse.value"
                         }
                     },
                     "RightValue": {"Get": "Parameters.RmseThreshold"}
