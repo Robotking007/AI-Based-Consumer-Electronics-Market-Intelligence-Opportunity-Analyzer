@@ -117,21 +117,22 @@ python run_pipeline.py --mode cloud --bucket <your-s3-bucket> --role-arn <your-s
 
 ---
 
-### Phase 3: Launch Full Interactive Dashboard (Backend + Frontend)
+### Phase 3: Launch Full Production Dashboard (Backend + Frontend)
 
-Launch the FastAPI backend and interactive frontend dashboard:
+Launch the FastAPI backend and enterprise decision intelligence platform:
 ```bash
 python app.py
 ```
-Open **[http://127.0.0.1:8080](http://127.0.0.1:8080)** in your browser to interact with:
-- Top 4 market metric cards (Market Opportunity, Predicted Growth, Sentiment Score, Optimal Price Range)
-- Product Hero Analysis with Boat Airdopes 141 (TWS), specs, recommendation checklist, and 78/100 score gauge
-- Predicted Demand Growth line chart (+18.6% Growth)
-- Review Sentiment Analysis donut chart + Key Review Aspect bars
-- Price Positioning scatter chart across category competitors
-- Competition Analysis table with live product selection
-- Google Trends search interest line chart (+42% vs last year)
-- Real-time XGBoost inference powered by `.joblib` & `.pkl` models
+Open **[http://127.0.0.1:8080](http://127.0.0.1:8080)** in your browser to interact with all 8 production modules:
+1. **Executive Dashboard**: Reference design view with 4 top summary cards, Boat Airdopes 141 hero card with circular score gauge, Chart.js demand growth chart, review sentiment donut, price scatter plot, and competition table.
+2. **Product Analysis**: Acoustic & Hardware Radar Chart (6 dimensions) and technical BOM breakdown.
+3. **Demand Prediction Studio**: Interactive What-If Scenario Simulator with live price, discount, battery, rating sliders and ANC/ENC/Fast-charge toggles running real-time XGBoost inference.
+4. **Sentiment Analysis**: Voice-of-Customer (VoC) sentiment polarity breakdown, positive purchase triggers, and critical customer churn drivers.
+5. **Price & Competition**: Interactive price tier volume distribution and searchable master benchmark table across 20,237 records.
+6. **Market Trends**: 12-month Google Trends trajectory, e-commerce channel shares (Amazon, Flipkart, Quick Commerce), and tech adoption penetration.
+7. **Strategic Recommendations**: Automated Go/No-Go verdict, pricing corridor sweet spot, and competitor weakness exploitation target.
+8. **Model Monitoring & MLOps**: Live SageMaker pipeline telemetry, Champion quality gate scorecard ($R^2 = 90.18\%$, $\text{RMSE} = 2.55$), and live XGBoost Feature Importance chart (Gain/Weight).
+9. **Executive Dossier Export**: Generate structured, printable board-level intelligence briefs with a single click.
 
 ## 6. Model Evaluation Results
 
