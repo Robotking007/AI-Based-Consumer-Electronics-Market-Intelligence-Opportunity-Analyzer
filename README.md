@@ -115,6 +115,24 @@ aws configure
 python run_pipeline.py --mode cloud --bucket <your-s3-bucket> --role-arn <your-sagemaker-role-arn> --region ap-south-1 --execute
 ```
 
+---
+
+### Phase 3: Launch Full Interactive Dashboard (Backend + Frontend)
+
+Launch the FastAPI backend and interactive frontend dashboard:
+```bash
+python app.py
+```
+Open **[http://127.0.0.1:8080](http://127.0.0.1:8080)** in your browser to interact with:
+- Top 4 market metric cards (Market Opportunity, Predicted Growth, Sentiment Score, Optimal Price Range)
+- Product Hero Analysis with Boat Airdopes 141 (TWS), specs, recommendation checklist, and 78/100 score gauge
+- Predicted Demand Growth line chart (+18.6% Growth)
+- Review Sentiment Analysis donut chart + Key Review Aspect bars
+- Price Positioning scatter chart across category competitors
+- Competition Analysis table with live product selection
+- Google Trends search interest line chart (+42% vs last year)
+- Real-time XGBoost inference powered by `.joblib` & `.pkl` models
+
 ## 6. Model Evaluation Results
 
 | Metric | Model Performance | Benchmark Target | Status |
