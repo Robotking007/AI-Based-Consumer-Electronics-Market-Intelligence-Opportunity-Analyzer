@@ -3,7 +3,7 @@
   "Metadata": {
     "PipelineName": "ConsumerElectronics-DemandGrowth-Pipeline",
     "Description": "End-to-End MLOps Pipeline for Consumer Electronics Market Intelligence (Group 10)",
-    "LastModified": "2026-10-17T18:37:34.829200"
+    "LastModified": "2026-10-17T18:41:35.764390"
   },
   "Parameters": [
     {
@@ -259,7 +259,7 @@
           {
             "Type": "LessThanOrEqualTo",
             "LeftValue": {
-              "Get": "Steps.EvaluateChallengerModel.OutputProperties.EvaluationReport.regression_metrics.rmse.value"
+              "Get": "Steps.EvaluateChallengerModel.PropertyFiles.EvaluationReport.regression_metrics.rmse.value"
             },
             "RightValue": {
               "Get": "Parameters.RmseThreshold"
