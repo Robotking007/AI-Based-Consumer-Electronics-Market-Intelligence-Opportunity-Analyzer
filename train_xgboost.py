@@ -13,6 +13,23 @@ import pandas as pd
 import xgboost as xgb
 
 
+def resolve_channel_path(path_or_dir: str, default_filename: str) -> str:
+    """Resolve directory or file path from SageMaker channel configuration."""
+    if not path_or_dir:
+        return default_filename
+    if os.path.isfile(path_or_dir):
+        return path_or_dir
+    if os.path.isdir(path_or_dir):
+        candidate = os.path.join(path_or_dir, default_filename)
+        if os.path.exists(candidate):
+            return candidate
+        # Search for any CSV file in the channel directory
+        csvs = [os.path.join(path_or_dir, f) for f in os.listdir(path_or_dir) if f.endswith(".csv")]
+        if csvs:
+            return csvs[0]
+    return path_or_dir
+
+
 def train(
     train_path: str,
     val_path: str,
@@ -24,20 +41,36 @@ def train(
     colsample_bytree: float = 0.85
 ):
     os.makedirs(output_dir, exist_ok=True)
-    print("Loading training and validation datasets...")
+    resolved_train = resolve_channel_path(train_path, "train.csv")
+    resolved_val = resolve_channel_path(val_path, "validation.csv")
+
+    print(f"Loading training dataset from   : {resolved_train}")
+    print(f"Loading validation dataset from : {resolved_val}")
+
+    if not os.path.exists(resolved_train):
+        raise FileNotFoundError(f"Training dataset does not exist at: {resolved_train}")
+    if not os.path.exists(resolved_val):
+        raise FileNotFoundError(f"Validation dataset does not exist at: {resolved_val}")
 
     # Load without header (standard SageMaker XGBoost format: column 0 is target)
-    train_data = pd.read_csv(train_path, header=None)
-    val_data = pd.read_csv(val_path, header=None)
+    train_data = pd.read_csv(resolved_train, header=None)
+    val_data = pd.read_csv(resolved_val, header=None)
 
-    y_train = train_data.iloc[:, 0].values
-    X_train = train_data.iloc[:, 1:].values
+    # Validate data integrity
+    train_nulls = train_data.isna().sum().sum()
+    val_nulls = val_data.isna().sum().sum()
+    if train_nulls > 0 or val_nulls > 0:
+        raise ValueError(f"Corrupt data detected! NaN count: train={train_nulls}, val={val_nulls}")
 
-    y_val = val_data.iloc[:, 0].values
-    X_val = val_data.iloc[:, 1:].values
+    y_train = train_data.iloc[:, 0].values.astype(np.float32)
+    X_train = train_data.iloc[:, 1:].values.astype(np.float32)
+
+    y_val = val_data.iloc[:, 0].values.astype(np.float32)
+    X_val = val_data.iloc[:, 1:].values.astype(np.float32)
 
     print(f"Train samples: {len(X_train):,}, Validation samples: {len(X_val):,}")
     print(f"Features: {X_train.shape[1]}")
+    print(f"Target Range (Train): min={y_train.min():.2f}, max={y_train.max():.2f}, mean={y_train.mean():.2f}")
 
     model = xgb.XGBRegressor(
         max_depth=max_depth,
@@ -88,18 +121,28 @@ def train(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="SageMaker XGBoost Training Step")
     # Support SageMaker environment variables or CLI flags
     train_dir = os.environ.get("SM_CHANNEL_TRAIN", "processed_data")
     val_dir = os.environ.get("SM_CHANNEL_VALIDATION", "processed_data")
     model_dir = os.environ.get("SM_MODEL_DIR", "model_output")
 
-    parser.add_argument("--train-data", default=os.path.join(train_dir, "train.csv"))
-    parser.add_argument("--val-data", default=os.path.join(val_dir, "validation.csv"))
+    parser.add_argument("--train-data", default=train_dir)
+    parser.add_argument("--val-data", default=val_dir)
     parser.add_argument("--model-dir", default=model_dir)
-    parser.add_argument("--max-depth", type=int, default=6)
-    parser.add_argument("--eta", type=float, default=0.08)
-    parser.add_argument("--n-estimators", type=int, default=150)
+
+    # Accept standard or SageMaker hyperparameter flags
+    hp_max_depth = int(os.environ.get("SM_HP_MAX_DEPTH", 6))
+    hp_eta = float(os.environ.get("SM_HP_ETA", 0.08))
+    hp_num_round = int(os.environ.get("SM_HP_NUM_ROUND", 150))
+    hp_subsample = float(os.environ.get("SM_HP_SUBSAMPLE", 0.85))
+    hp_colsample = float(os.environ.get("SM_HP_COLSAMPLE_BYTREE", 0.85))
+
+    parser.add_argument("--max-depth", type=int, default=hp_max_depth)
+    parser.add_argument("--eta", type=float, default=hp_eta)
+    parser.add_argument("--n-estimators", "--num-round", "--num_round", dest="n_estimators", type=int, default=hp_num_round)
+    parser.add_argument("--subsample", type=float, default=hp_subsample)
+    parser.add_argument("--colsample-bytree", "--colsample_bytree", dest="colsample_bytree", type=float, default=hp_colsample)
 
     args = parser.parse_args()
     train(
@@ -108,5 +151,7 @@ if __name__ == "__main__":
         output_dir=args.model_dir,
         max_depth=args.max_depth,
         eta=args.eta,
-        n_estimators=args.n_estimators
+        n_estimators=args.n_estimators,
+        subsample=args.subsample,
+        colsample_bytree=args.colsample_bytree
     )
