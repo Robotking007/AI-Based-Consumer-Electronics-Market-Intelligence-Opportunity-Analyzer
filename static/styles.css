@@ -1,0 +1,904 @@
+/* 
+  styles.css - Exact Design Replication for Market Opportunity Analyzer Dashboard
+  Matches typography, colors, layout, and visual details from target interface.
+*/
+
+:root {
+  --bg-app: #f1f5f9;
+  --bg-card: #ffffff;
+  --nav-dark: #0b1727;
+  --sidebar-dark: #0f1e36;
+  --sidebar-hover: #172844;
+  --primary-blue: #2563eb;
+  --primary-blue-hover: #1d4ed8;
+  --green-success: #10b981;
+  --green-light: #ecfdf5;
+  --green-badge-bg: #dcfce7;
+  --green-badge-text: #166534;
+  --purple-text: #7c3aed;
+  --purple-badge-bg: #f3e8ff;
+  --purple-badge-text: #6b21a8;
+  --red-text: #ef4444;
+  --red-light: #fef2f2;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border-card: #e2e8f0;
+  --radius-card: 10px;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ----------------------------------------------------
+   Top Navigation Bar
+---------------------------------------------------- */
+.top-nav {
+  height: 64px;
+  background-color: var(--nav-dark);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+}
+
+.brand-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.brand-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.brand-subtitle {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Search Bar */
+.nav-search-container {
+  position: relative;
+  width: 480px;
+}
+
+.search-input-wrapper {
+  background-color: #ffffff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  gap: 10px;
+}
+
+.search-icon {
+  width: 17px;
+  height: 17px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.search-input-wrapper input {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  width: 100%;
+  color: #1e293b;
+  font-family: inherit;
+}
+
+.search-input-wrapper input::placeholder {
+  color: #94a3b8;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 6px;
+  margin-top: 4px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.search-dropdown.hidden {
+  display: none;
+}
+
+.dropdown-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdown-item:hover {
+  background-color: #f8fafc;
+  color: var(--primary-blue);
+}
+
+.dropdown-item .item-price {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Date Range Button */
+.nav-actions {
+  display: flex;
+  align-items: center;
+}
+
+.date-picker-btn {
+  background-color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.date-picker-btn:hover {
+  background-color: #f8fafc;
+}
+
+.calendar-icon {
+  width: 15px;
+  height: 15px;
+  color: #64748b;
+}
+
+.chevron-icon {
+  width: 13px;
+  height: 13px;
+  color: #64748b;
+}
+
+/* ----------------------------------------------------
+   App Layout (Sidebar + Main Content)
+---------------------------------------------------- */
+.app-layout {
+  display: flex;
+  min-height: calc(100vh - 64px);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background-color: var(--sidebar-dark);
+  flex-shrink: 0;
+  padding: 16px 10px;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 7px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+}
+
+.nav-item:hover {
+  background-color: var(--sidebar-hover);
+  color: #ffffff;
+}
+
+.nav-item.active {
+  background-color: var(--primary-blue);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.nav-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-x: hidden;
+}
+
+/* ----------------------------------------------------
+   Top 4 Summary Metric Cards
+---------------------------------------------------- */
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.metric-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  padding: 16px 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.metric-card-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.metric-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-icon-wrap svg {
+  width: 22px;
+  height: 22px;
+}
+
+.icon-green {
+  background-color: #ecfdf5;
+  color: #10b981;
+}
+
+.icon-blue {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.icon-purple {
+  background-color: #faf5ff;
+  color: #8b5cf6;
+}
+
+.icon-red {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+.metric-text-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+
+.value-green { color: var(--green-success); }
+.value-blue { color: var(--primary-blue); }
+.value-purple { color: #6d28d9; }
+.value-red { color: var(--red-text); }
+
+.metric-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* ----------------------------------------------------
+   General Card Styles
+---------------------------------------------------- */
+.content-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  padding: 18px 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 14px;
+}
+
+.card-header-with-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-header-with-badge .card-title {
+  margin-bottom: 0;
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+}
+
+.badge-green {
+  background-color: var(--green-badge-bg);
+  color: var(--green-badge-text);
+}
+
+.badge-purple {
+  background-color: var(--purple-badge-bg);
+  color: var(--purple-badge-text);
+}
+
+/* ----------------------------------------------------
+   Hero Product Analysis Card
+---------------------------------------------------- */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 140px 1.4fr 1.6fr 170px;
+  gap: 24px;
+  align-items: center;
+}
+
+/* Col 1: Product Image */
+.hero-image-col {
+  display: flex;
+  justify-content: center;
+}
+
+.product-image-container {
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Col 2: Specs Grid */
+.specs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spec-row {
+  display: flex;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.spec-label {
+  width: 105px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.spec-value {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.status-instock {
+  color: var(--green-success);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot-green {
+  width: 8px;
+  height: 8px;
+  background-color: var(--green-success);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Col 3: Recommendation Box */
+.hero-recommendation-col {
+  border-left: 1px solid var(--border-card);
+  padding-left: 20px;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.trophy-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #ecfdf5;
+  color: var(--green-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.trophy-icon-wrap svg {
+  width: 18px;
+  height: 18px;
+}
+
+.recommendation-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.recommendation-small {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.recommendation-headline {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--green-success);
+  letter-spacing: 0.3px;
+}
+
+.recommendation-checklist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.recommendation-checklist li {
+  font-size: 12px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.check-icon {
+  color: var(--green-success);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Col 4: Opportunity Score Circular Gauge */
+.hero-gauge-col {
+  border-left: 1px solid var(--border-card);
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.gauge-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.circular-gauge-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-gauge {
+  width: 100px;
+  height: 100px;
+  transform: rotate(-90deg);
+}
+
+.gauge-bg {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 9;
+}
+
+.gauge-fill {
+  fill: none;
+  stroke: var(--green-success);
+  stroke-width: 9;
+  stroke-dasharray: 301.6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease-in-out;
+}
+
+.gauge-center-text {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+}
+
+.gauge-score {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.gauge-max {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.gauge-status-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  max-width: 130px;
+}
+
+/* ----------------------------------------------------
+   Middle Row: Charts
+---------------------------------------------------- */
+.charts-row-middle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.chart-card {
+  min-height: 250px;
+}
+
+.chart-canvas-container {
+  height: 200px;
+  position: relative;
+}
+
+.card-header-titles {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.chart-legend-custom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dash {
+  width: 14px;
+  height: 2px;
+  display: inline-block;
+  border-top: 2px dashed #94a3b8;
+}
+
+.dot-blue { background-color: var(--primary-blue); }
+.dot-gray { background-color: #cbd5e1; }
+.dot-red { background-color: #ef4444; }
+.dot-light-blue { background-color: #93c5fd; }
+
+/* Sentiment Card Layout */
+.sentiment-content-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 16px;
+  align-items: center;
+  height: 195px;
+}
+
+.sentiment-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.donut-chart-canvas-box {
+  width: 130px;
+  height: 130px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center-label {
+  position: absolute;
+  text-align: center;
+  pointer-events: none;
+}
+
+.donut-number {
+  font-size: 15px;
+  font-weight: 800;
+  display: block;
+  line-height: 1.1;
+  color: var(--text-main);
+}
+
+.donut-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.donut-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.donut-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Key Review Aspects Bars */
+.sentiment-aspects-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aspects-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.aspect-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aspect-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+}
+
+.aspect-name {
+  width: 95px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.aspect-bar-track {
+  flex: 1;
+  height: 10px;
+  background-color: #e2e8f0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.aspect-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+.aspect-score {
+  width: 30px;
+  text-align: right;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* ----------------------------------------------------
+   Bottom Row: 3 Cards
+---------------------------------------------------- */
+.charts-row-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.card-bottom {
+  min-height: 250px;
+}
+
+.scatter-chart-wrap {
+  height: 170px;
+  position: relative;
+}
+
+.scatter-legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* Competition Table */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.competition-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.competition-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-card);
+  background-color: #f8fafc;
+}
+
+.competition-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: var(--text-main);
+}
+
+.competition-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.competition-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.competition-table tbody tr.row-selected {
+  background-color: #fff1f2;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.competition-table tbody tr.row-selected td {
+  color: #991b1b;
+}
+
+/* Model Telemetry Hidden Section */
+.hidden-section {
+  display: none;
+}
+
+.model-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.telemetry-item {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.telemetry-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.telemetry-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .charts-row-bottom {
+    grid-template-columns: 1fr;
+  }
+  .summary-cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
