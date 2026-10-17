@@ -39,6 +39,9 @@ model_output/
 evaluation_output/
 mock_sagemaker_runs/
 mock_sagemaker_test_runs/
+test_processed_data/
+test_model_output/
+test_evaluation_output/
 
 # OS
 .DS_Store
