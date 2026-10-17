@@ -372,35 +372,61 @@ def save_and_deploy_pipeline(
             s3_client = boto3.client("s3", region_name=region)
             sm_client = boto3.client("sagemaker", region_name=region)
 
-            # 1. Sync code dependencies to S3
-            print(f"\n[S3 Sync] Uploading pipeline scripts to s3://{bucket_name}/code/...")
+            # 1. Sync code dependencies & raw dataset to S3
+            print(f"\n[S3 Sync] Uploading pipeline dependencies to s3://{bucket_name}/...")
             for script in ["preprocessing.py", "evaluate.py"]:
                 if os.path.exists(script):
                     s3_client.upload_file(script, bucket_name, f"code/{script}")
-                    print(f" - Uploaded: s3://{bucket_name}/code/{script}")
+                    print(f" ✔ Uploaded script : s3://{bucket_name}/code/{script}")
 
-            # 2. Upsert Pipeline on AWS SageMaker
-            print(f"\n[SageMaker] Upserting Pipeline '{pipeline_def['Metadata']['PipelineName']}' in region {region}...")
-            response = sm_client.upsert_pipeline(
-                PipelineName=pipeline_def["Metadata"]["PipelineName"],
-                PipelineDefinition=json.dumps(pipeline_def),
-                PipelineDescription=pipeline_def["Metadata"]["Description"],
-                RoleArn=role_arn
-            )
-            pipeline_arn = response.get("PipelineArn")
-            print(f" [SUCCESS] SageMaker Pipeline upserted! ARN: {pipeline_arn}")
+            # Upload raw dataset
+            raw_key = f"raw/date={datetime.utcnow().strftime('%Y-%m-%d')}/consumer_electronics_market_20k.csv"
+            raw_file = "consumer_electronics_market_20k.csv"
+            if os.path.exists(raw_file):
+                print(f"[S3 Sync] Uploading raw market dataset to s3://{bucket_name}/{raw_key}...")
+                s3_client.upload_file(raw_file, bucket_name, raw_key)
+                print(f" ✔ Uploaded dataset: s3://{bucket_name}/{raw_key}")
 
-            # 3. Optional trigger
+            # 2. Upsert Pipeline on AWS SageMaker using boto3
+            p_name = pipeline_def["Metadata"]["PipelineName"]
+            p_desc = pipeline_def["Metadata"]["Description"]
+            p_json = json.dumps(pipeline_def)
+
+            print(f"\n[SageMaker] Deploying Pipeline '{p_name}' in region {region}...")
+            try:
+                response = sm_client.create_pipeline(
+                    PipelineName=p_name,
+                    PipelineDefinition=p_json,
+                    PipelineDescription=p_desc,
+                    RoleArn=role_arn
+                )
+                pipeline_arn = response.get("PipelineArn")
+                print(f" ✔ [SUCCESS] SageMaker Pipeline created! ARN: {pipeline_arn}")
+            except sm_client.exceptions.ClientError as ce:
+                if "AlreadyExists" in str(ce) or "already exists" in str(ce):
+                    print(f" ℹ Pipeline '{p_name}' already exists. Updating pipeline definition...")
+                    response = sm_client.update_pipeline(
+                        PipelineName=p_name,
+                        PipelineDefinition=p_json,
+                        PipelineDescription=p_desc,
+                        RoleArn=role_arn
+                    )
+                    pipeline_arn = response.get("PipelineArn")
+                    print(f" ✔ [SUCCESS] SageMaker Pipeline updated! ARN: {pipeline_arn}")
+                else:
+                    raise ce
+
+            # 3. Optional execution trigger
             if trigger_execution:
-                print(f"[SageMaker] Starting AWS Pipeline Execution...")
+                print(f"\n[SageMaker] Triggering AWS Pipeline Execution...")
                 exec_res = sm_client.start_pipeline_execution(
-                    PipelineName=pipeline_def["Metadata"]["PipelineName"],
+                    PipelineName=p_name,
                     PipelineExecutionDisplayName=f"exec-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
                 )
-                print(f" [SUCCESS] Started Execution ARN: {exec_res.get('PipelineExecutionArn')}")
+                print(f" ✔ [SUCCESS] Started Execution ARN: {exec_res.get('PipelineExecutionArn')}")
 
         except Exception as e:
-            print(f"[AWS Error] Failed during SageMaker deployment: {e}")
+            print(f"\n[AWS Error] Failed during SageMaker deployment: {e}")
     else:
         print("\n[NOTE] Running in offline / mock mode.")
         print(f" Pipeline specification is validated and saved locally as '{output_json}'.")
