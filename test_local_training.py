@@ -67,9 +67,8 @@ def run_local_training_verification():
     print("="*75)
 
     # 1. Feature Engineering & Preprocessing
-    print("\n[Stage 1: Feature Engineering & Preprocessing]")
     proc_dir = "test_processed_data"
-    raw_csv = "consumer_electronics_market_20k.csv"
+    raw_csv = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
     train_path, val_path, test_path = preprocessing.run_preprocessing(
         input_csv=raw_csv,
         output_dir=proc_dir,

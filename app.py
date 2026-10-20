@@ -44,7 +44,9 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 MODEL_DIR = os.path.join(BASE_DIR, "model_output")
-DATASET_PATH = os.path.join(BASE_DIR, "consumer_electronics_market_20k.csv")
+DATASET_PATH = os.path.join(BASE_DIR, "consumer_electronics_market.csv")
+if not os.path.exists(DATASET_PATH):
+    DATASET_PATH = os.path.join(BASE_DIR, "consumer_electronics_market_20k.csv")
 
 # Global Cache
 model = None

@@ -5,7 +5,8 @@ import numpy as np
 sys.stdout.reconfigure(encoding='utf-8')
 
 def run_verification():
-    file_path = "consumer_electronics_market_20k.csv"
+    import os
+    file_path = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
     print(f"Loading {file_path}...")
     df = pd.read_csv(file_path)
     
