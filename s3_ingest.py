@@ -54,7 +54,7 @@ def validate_dataset(csv_path: str) -> pd.DataFrame:
 
 
 def ingest_to_s3(
-    file_path: str = "consumer_electronics_market_20k.csv",
+    file_path: str = None,
     bucket_name: str = None,
     partition_date: str = None,
     local_mock: bool = False
@@ -63,17 +63,21 @@ def ingest_to_s3(
     Ingest dataset to S3 under raw/date=YYYY-MM-DD/ partitioned prefix.
     If local_mock=True or AWS credentials are unavailable, stores into ./mock_s3_storage/.
     """
+    if not file_path:
+        file_path = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
+
     df = validate_dataset(file_path)
 
     if not partition_date:
         partition_date = datetime.utcnow().strftime("%Y-%m-%d")
 
-    s3_key = f"raw/date={partition_date}/consumer_electronics_market_20k.csv"
+    base_name = os.path.basename(file_path)
+    s3_key = f"raw/date={partition_date}/{base_name}"
     meta_key = f"raw/date={partition_date}/metadata.json"
 
     channel_breakdown = df["market_channel"].value_counts().to_dict()
     metadata = {
-        "dataset_name": "consumer_electronics_market_20k",
+        "dataset_name": os.path.splitext(base_name)[0],
         "total_rows": int(len(df)),
         "total_columns": int(len(df.columns)),
         "partition_date": partition_date,
@@ -158,7 +162,8 @@ def lambda_handler(event, context):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ingest consumer electronics dataset into S3 storage.")
-    parser.add_argument("--file", default="consumer_electronics_market_20k.csv", help="Path to source CSV file")
+    default_file = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
+    parser.add_argument("--file", default=default_file, help="Path to source CSV file")
     parser.add_argument("--bucket", default=os.environ.get("S3_BUCKET_NAME", ""), help="AWS S3 Bucket name")
     parser.add_argument("--date", default=None, help="Partition date in YYYY-MM-DD format (default: today)")
     parser.add_argument("--local", action="store_true", help="Force local simulated S3 mode")
