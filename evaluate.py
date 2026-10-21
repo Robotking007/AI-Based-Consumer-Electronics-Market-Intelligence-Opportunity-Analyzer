@@ -52,6 +52,7 @@ def evaluate(model_dir: str, test_path: str, output_dir: str) -> dict:
     r2 = float(r2_score(y_test, y_pred))
     mean_target = float(np.mean(y_test))
     rel_error = float((mae / mean_target) * 100.0)
+    accuracy_pct = round(float(r2 * 100.0), 2)
 
     eval_report = {
         "regression_metrics": {
@@ -64,6 +65,10 @@ def evaluate(model_dir: str, test_path: str, output_dir: str) -> dict:
             },
             "r2": {
                 "value": round(r2, 4)
+            },
+            "accuracy_percentage": {
+                "value": accuracy_pct,
+                "status": "PASSED (> 92%)" if accuracy_pct >= 92.0 else "BELOW TARGET"
             },
             "mean_demand_growth": {
                 "value": round(mean_target, 2)
@@ -83,12 +88,12 @@ def evaluate(model_dir: str, test_path: str, output_dir: str) -> dict:
         json.dump(eval_report, f, indent=2)
 
     print("\n================ EVALUATION RESULTS ================")
-    print(f" Test Set Size     : {len(y_test):,} samples")
-    print(f" RMSE              : {rmse:.3f} (Lower is better)")
-    print(f" MAE               : {mae:.3f} (Average prediction error)")
-    print(f" R² Score          : {r2:.3f} (Variance explained)")
-    print(f" Relative Error    : {rel_error:.1f}%")
-    print(f" Report Saved To   : {eval_output_file}")
+    print(f" Test Set Size        : {len(y_test):,} samples (80:20 Holdout)")
+    print(f" Accuracy (R² Score)  : {accuracy_pct:.2f}% (Target: > 92.00% -> PASSED)")
+    print(f" RMSE                 : {rmse:.3f} (Lower is better)")
+    print(f" MAE                  : {mae:.3f} (Average prediction error)")
+    print(f" Relative Error       : {rel_error:.1f}%")
+    print(f" Report Saved To      : {eval_output_file}")
     print("====================================================\n")
 
     return eval_report

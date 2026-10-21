@@ -41,8 +41,10 @@ class MockSageMakerPipelineExecutor:
         self,
         pipeline_def_path: str = "pipeline_definition.json",
         output_root: str = "mock_sagemaker_runs",
-        dataset_path: str = "consumer_electronics_market_20k.csv"
+        dataset_path: str = None
     ):
+        if not dataset_path:
+            dataset_path = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
         self.pipeline_def_path = pipeline_def_path
         self.output_root = output_root
         self.dataset_path = dataset_path
@@ -496,9 +498,11 @@ def run_mock_pipeline(
     pipeline_def_path: str = "pipeline_definition.json",
     rmse_threshold: Optional[float] = None,
     sample_limit: Optional[int] = None,
-    dataset_path: str = "consumer_electronics_market_20k.csv"
+    dataset_path: str = None
 ) -> Dict[str, Any]:
     """Convenience helper to initialize and run the local mock pipeline."""
+    if not dataset_path:
+        dataset_path = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
     executor = MockSageMakerPipelineExecutor(
         pipeline_def_path=pipeline_def_path,
         dataset_path=dataset_path
@@ -511,12 +515,13 @@ def run_mock_pipeline(
 
 
 if __name__ == "__main__":
+    default_data = "consumer_electronics_market.csv" if os.path.exists("consumer_electronics_market.csv") else "consumer_electronics_market_20k.csv"
     parser = argparse.ArgumentParser(description="Run Mock SageMaker Pipeline locally")
     parser.add_argument("--pipeline-def", default="pipeline_definition.json", help="Path to pipeline definition JSON")
     parser.add_argument("--threshold", type=float, default=None, help="Override Quality Gate RMSE Threshold")
     parser.add_argument("--sample-limit", type=int, default=None, help="Limit dataset rows for fast testing")
     parser.add_argument("--force-fail", action="store_true", help="Force Quality Gate to fail (tests condition rejection)")
-    parser.add_argument("--data", default="consumer_electronics_market_20k.csv", help="Input dataset CSV")
+    parser.add_argument("--data", default=default_data, help="Input dataset CSV")
 
     args = parser.parse_args()
     threshold = 0.5 if args.force_fail else args.threshold

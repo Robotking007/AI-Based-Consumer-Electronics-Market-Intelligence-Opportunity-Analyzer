@@ -9,7 +9,7 @@
     {
       "Name": "InputDataUrl",
       "Type": "String",
-      "DefaultValue": "s3://consumer-electronics-mlops-533267153786/raw/date=2026-10-17/consumer_electronics_market_20k.csv"
+      "DefaultValue": "s3://consumer-electronics-mlops-533267153786/raw/date=2026-10-17/consumer_electronics_market.csv"
     },
     {
       "Name": "ProcessingInstanceType",

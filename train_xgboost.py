@@ -5,6 +5,12 @@ Trains an XGBoost Regressor to predict 30-day demand growth (Section 3 & 4 of PR
 
 import os
 import sys
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
+
 import json
 import tarfile
 import argparse
@@ -131,17 +137,67 @@ def train(
     val_preds = model.predict(X_val)
     val_rmse = float(np.sqrt(np.mean((val_preds - y_val) ** 2)))
     val_mae = float(np.mean(np.abs(val_preds - y_val)))
-    print(f"\nValidation Performance -> RMSE: {val_rmse:.3f} | MAE: {val_mae:.3f}")
+    val_r2 = float(1.0 - (np.sum((val_preds - y_val) ** 2) / (np.sum((y_val - np.mean(y_val)) ** 2) + 1e-7)))
+    print(f"\nValidation Performance -> Accuracy (R²): {val_r2*100:.2f}% | RMSE: {val_rmse:.3f} | MAE: {val_mae:.3f}")
 
     return model, val_rmse, val_mae
 
 
+def upload_artifacts_to_s3(model_dir: str, bucket_name: str, prefix: str = "models/latest") -> list:
+    """Upload trained model artifacts to AWS S3 bucket."""
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
+
+    try:
+        import boto3
+    except ImportError:
+        print("[S3 Upload] boto3 is not installed; skipping S3 upload.")
+        return []
+
+    s3 = boto3.client("s3")
+    artifacts = ["model.tar.gz", "xgboost-model.json", "model.joblib", "model.pkl"]
+    uploaded_keys = []
+
+    print(f"\n[AWS S3] Uploading trained model artifacts to s3://{bucket_name}/{prefix}/...")
+    for art in artifacts:
+        local_path = os.path.join(model_dir, art)
+        if os.path.exists(local_path):
+            s3_key = f"{prefix}/{art}"
+            s3.upload_file(local_path, bucket_name, s3_key)
+            print(f" ✔ Uploaded: s3://{bucket_name}/{s3_key}")
+            uploaded_keys.append(s3_key)
+
+    # Also upload evaluation.json and feature_metadata.json if present
+    for extra in ["evaluation.json", "feature_metadata.json"]:
+        # Check model_dir and parent dirs
+        for cand in [os.path.join(model_dir, extra), os.path.join("evaluation_output", extra), os.path.join("processed_data", extra)]:
+            if os.path.exists(cand):
+                s3_key = f"{prefix}/{extra}"
+                s3.upload_file(cand, bucket_name, s3_key)
+                print(f" ✔ Uploaded: s3://{bucket_name}/{s3_key}")
+                uploaded_keys.append(s3_key)
+                break
+
+    print(f"[AWS S3] All model artifacts successfully stored in S3 bucket '{bucket_name}'!\n")
+    return uploaded_keys
+
+
 if __name__ == "__main__":
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
+
     parser = argparse.ArgumentParser(description="SageMaker XGBoost Training Step")
     # Support SageMaker environment variables or CLI flags
     train_dir = os.environ.get("SM_CHANNEL_TRAIN", "processed_data")
     val_dir = os.environ.get("SM_CHANNEL_VALIDATION", "processed_data")
     model_dir = os.environ.get("SM_MODEL_DIR", "model_output")
+    s3_bucket = os.environ.get("S3_BUCKET_NAME", "")
 
     parser.add_argument("--train-data", default=train_dir)
     parser.add_argument("--val-data", default=val_dir)
@@ -150,7 +206,7 @@ if __name__ == "__main__":
     # Accept standard or SageMaker hyperparameter flags
     hp_max_depth = int(os.environ.get("SM_HP_MAX_DEPTH", 6))
     hp_eta = float(os.environ.get("SM_HP_ETA", 0.08))
-    hp_num_round = int(os.environ.get("SM_HP_NUM_ROUND", 150))
+    hp_num_round = int(os.environ.get("SM_HP_NUM_ROUND", 180))
     hp_subsample = float(os.environ.get("SM_HP_SUBSAMPLE", 0.85))
     hp_colsample = float(os.environ.get("SM_HP_COLSAMPLE_BYTREE", 0.85))
 
@@ -159,9 +215,11 @@ if __name__ == "__main__":
     parser.add_argument("--n-estimators", "--num-round", "--num_round", dest="n_estimators", type=int, default=hp_num_round)
     parser.add_argument("--subsample", type=float, default=hp_subsample)
     parser.add_argument("--colsample-bytree", "--colsample_bytree", dest="colsample_bytree", type=float, default=hp_colsample)
+    parser.add_argument("--s3-bucket", default=s3_bucket, help="S3 bucket name to store trained model")
+    parser.add_argument("--upload-s3", action="store_true", help="Upload trained model to S3 after training")
 
     args = parser.parse_args()
-    train(
+    model, _, _ = train(
         train_path=args.train_data,
         val_path=args.val_data,
         output_dir=args.model_dir,
@@ -171,3 +229,8 @@ if __name__ == "__main__":
         subsample=args.subsample,
         colsample_bytree=args.colsample_bytree
     )
+
+    if args.upload_s3:
+        bucket = args.s3_bucket or os.environ.get("S3_BUCKET_NAME")
+        if bucket:
+            upload_artifacts_to_s3(args.model_dir, bucket)
