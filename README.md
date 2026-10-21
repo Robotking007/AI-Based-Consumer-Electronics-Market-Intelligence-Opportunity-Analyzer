@@ -1,160 +1,203 @@
 # AI-Based Consumer Electronics Market Intelligence & Opportunity Analyzer
 
-> **Production MLOps Pipeline on AWS** · Focus: Wireless Audio & Consumer Electronics  
+> **Production MLOps & Orchestration Pipeline** · Focus: True Wireless Stereo (TWS) Earbuds  
 > Group No. 10 · Department of Artificial Intelligence and Data Science
 
 ---
 
 ## 1. Overview
 
-A decision-support system that tells a company whether launching a new consumer electronics product (e.g., Wireless TWS Earbuds) represents a high-potential market opportunity. The platform collects and unifies omni-channel market data (prices, customer reviews, rating velocity, hardware specifications), predicts measurable signals like **30-day demand growth**, and combines them into an explainable **High / Medium / Low** opportunity assessment with competitive pricing bands and sentiment analysis.
+An enterprise decision-support and opportunity analyzer tailored specifically for the **True Wireless Stereo (TWS) Earbuds** consumer electronics category. The platform ingests omni-channel market data (pricing, specifications, customer reviews, ratings), extracts 27 high-signal hardware, sentiment, and elasticity features, predicts **30-day demand growth**, and determines actionable market entry sweet spots.
 
-The second half of the project is automated **MLOps on AWS**: data collection, S3 partitioned ingestion, SageMaker feature engineering, model training with XGBoost, fixed test-set evaluation, champion-challenger quality gates, and model registry packaging.
-
----
-
-## 2. Architecture
-
-```
-DATA     EventBridge → Lambda → S3 (raw/date=YYYY-MM-DD/) → SageMaker Processing (Feature Engineering)
-                                                                    │
-TRAIN    Model Registry ← Quality Gate (RMSE Gate) ← Evaluation ← Training Job (XGBoost)
-              │
-SERVE    SageMaker Endpoint → API Gateway (+Lambda) → Dashboard → CloudWatch (Drift Monitor)
-```
-
-### Pipeline Workflow
-1. **S3 Ingestion (`s3_ingest.py`)**: Partitions raw market snapshots by date (`s3://<bucket>/raw/date=YYYY-MM-DD/`) with schema validation and metadata tracking. Compatible with AWS Lambda and local simulation.
-2. **Feature Engineering (`preprocessing.py`)**: Cleans currency/ratings, extracts 27 numerical/spec/sentiment features, simulates 30-day demand growth proxy, and prepares SageMaker-ready train/validation/test splits.
-3. **Model Training (`train_xgboost.py`)**: Trains an XGBoost Regressor on SageMaker container infrastructure.
-4. **Evaluation (`evaluate.py`)**: Evaluates the challenger model against the test set, computing RMSE, MAE, and R², outputting `evaluation.json`.
-5. **Quality Gate (`sagemaker_pipeline.py`)**: ConditionStep verifies that challenger RMSE meets required threshold (e.g., RMSE ≤ 12.0) before approving for SageMaker Model Registry.
-6. **Decision Engine & Demo (`run_pipeline.py`)**: Combines predicted growth, competitor pricing bands, and customer sentiment into business recommendations.
+The platform includes two industry-standard MLOps orchestration workflows:
+1. **Apache Airflow Pipeline (`dags/consumer_electronics_airflow_dag.py`)**: End-to-end DAG orchestrating data availability, 80:20 feature engineering, model training, accuracy evaluation, quality gate branching ($\ge 92\%$), automated S3 storage, and model registration.
+2. **AWS SageMaker & S3 MLOps (`sagemaker_pipeline.py` & `train_and_upload_s3.py`)**: S3 partitioned ingestion, SageMaker containerized feature extraction, XGBoost training, and artifact publishing.
+3. **Kaggle Training Package (`kaggle_train_model.ipynb` & `kaggle_train.py`)**: Ready-to-run Kaggle notebook and standalone script for training on cloud accelerators and syncing directly to AWS S3.
 
 ---
 
-## 3. Dataset Overview
-
-**Unified Master Dataset:** [`consumer_electronics_market_20k.csv`](consumer_electronics_market_20k.csv)  
-- **Total Records:** 20,237 products across 17 unified schema attributes
-- **Omni-Channel Coverage:**
-  - **Amazon India (Online Marketplace):** 9,000 products
-  - **Croma (Offline Retail Chain - Tata Infiniti Retail):** 8,500 products
-  - **Flipkart (Online Marketplace):** 1,861 products
-  - **Offline Electronics Market (Dealer MOP):** 876 products
-- **Audio / Earbuds / Headphones Focus Subset:** 9,409 products
-
-### Extracted Feature Groups
-- **Price Features:** `discounted_price`, `actual_price`, `discount_pct`, `price_gap`, `price_vs_median`, `price_tier`
-- **Customer Response:** `rating`, `rating_count`, `log_rating_count`, `review_rating_score`, `rating_count_share`
-- **Hardware Specs (Regex Parsed):** `is_wireless`, `has_anc`, `has_enc`, `has_mic`, `fast_charge`, `low_latency`, `voice_assistant`, `bt_version`, `ipx_rating`, `driver_mm`, `playtime_hrs`
-- **Sentiment Signals:** NLTK VADER compound sentiment score & positive review ratio
-- **Target Variable:** 30-day review count growth (% demand proxy)
-
----
-
-## 4. Repository Structure
+## 2. Pipeline Architecture
 
 ```
-├── consumer_electronics_market_20k.csv  # Unified 20k multi-channel dataset
-├── s3_ingest.py                         # S3 ingestion with Lambda handler & local fallback
-├── preprocessing.py                     # SageMaker Processing feature engineering step
-├── train_xgboost.py                     # SageMaker XGBoost training step
-├── evaluate.py                          # Evaluation step producing evaluation.json
-├── sagemaker_pipeline.py                # AWS SageMaker Pipeline DAG JSON definition
-├── mock_sagemaker_runner.py             # Local SageMaker Pipeline simulator & DAG executor
-├── test_mock_pipeline.py                # Automated pytest suite for mock pipeline & quality gate
-├── run_pipeline.py                      # Master MLOps pipeline orchestrator
-├── verify_dataset.py                    # Dataset validation and integrity check
-├── generate_dataset.py                  # Dataset generation and consolidation script
-├── PROJECT.md                           # Detailed project design document
-├── requirements.txt                     # Python dependencies
-└── README.md                            # Documentation
+                                  [ 50k Pure TWS Master Dataset ]
+                                                 │
+                                                 ▼
+             ┌───────────────────────────────────────────────────────────────────────┐
+             │            Apache Airflow DAG / AWS SageMaker Pipeline               │
+             └───────────────────────────────────────────────────────────────────────┘
+                                                 │
+                     ┌───────────────────────────┴───────────────────────────┐
+                     ▼                                                       ▼
+          [ check_data_availability ]                             [ S3 Date Ingestion ]
+                     │                                                       │
+                     ▼                                                       ▼
+       [ feature_engineering_80_20 ]                             [ SageMaker Processing ]
+          (27 Specs, Sentiment, Price)                               (Train: 40k, Test: 10k)
+                     │                                                       │
+                     ▼                                                       ▼
+         [ train_xgboost_model ]                                  [ SageMaker Training ]
+          (Tuned XGBoost Regressor)                                  (Built-in Container)
+                     │                                                       │
+                     ▼                                                       ▼
+        [ evaluate_model_accuracy ]                               [ Model Evaluation ]
+          (R²: 94.00%, RMSE: 1.1922)                                 (evaluation.json)
+                     │                                                       │
+                     ▼                                                       ▼
+        [ quality_gate_decision ] ──── Accuracy < 92% ────────► [ send_failure_alert ]
+                     │
+              Accuracy >= 92%
+                     │
+                     ▼
+            [ store_model_in_s3 ]  ──►  s3://consumer-electronics-mlops-533267153786/models/latest/
+                     │
+                     ▼
+         [ register_approved_model ]
 ```
 
 ---
 
-## 5. Quickstart & Execution
+## 3. 50,000 Pure TWS Master Dataset
 
-### Install Dependencies
+* **Dataset File:** [`consumer_electronics_market.csv`](consumer_electronics_market.csv) (89.55 MB)
+* **Dataset Generator:** [`build_50k_tws_dataset.py`](build_50k_tws_dataset.py)
+* **Category Focus:** **100% True Wireless Stereo (TWS) Earbuds** (`Electronics|Headphones,Earbuds&Accessories|Headphones|In-Ear`). Exclusively TWS; zero cables, chargers, smartphones, or unrelated appliances.
+* **Sorting Hierarchy:** Dataset is **cleanly sorted** by:
+  $$\text{Category} \longrightarrow \text{Brand Name} \longrightarrow \text{Discounted Price}$$
+* **Data Quality:** Zero missing/null values across all 17 schema columns, 50,000 unique product names, and sequential IDs (`TWS_000001` to `TWS_050000`).
+* **Multi-Channel Market Distribution:**
+  - **Amazon India (Online Marketplace):** 17,049 products (34.1%)
+  - **Croma (Offline Retail Network - Tata Infiniti):** 13,599 products (27.2%)
+  - **Offline Electronics Dealer MOP Network:** 10,958 products (21.9%)
+  - **Flipkart (Online Marketplace):** 8,394 products (16.8%)
+
+### 27 Extracted Feature Groups (80:20 Split)
+
+* **TWS Acoustic & Hardware Specs (Regex Extracted):** Active Noise Cancellation (`has_anc`), Environmental Noise Cancellation (`has_enc`), Mic system (`has_mic`), Fast Charging (`fast_charge`), Low Latency Mode (`low_latency`), Voice Assistant (`voice_assistant`), Bluetooth Version (`bt_version` 5.0–5.4), IPX Waterproof Rating (`ipx_rating` 0–8), Audio Driver Diameter (`driver_mm`), Total Battery Playtime (`playtime_hrs`).
+* **Price & Elasticity Signals:** `discounted_price`, `actual_price`, `discount_pct`, `price_gap`, `price_vs_median`, and categorical price tiers (`Budget`, `Mid-Tier`, `Flagship`).
+* **Customer Response & NLP Sentiment:** Star rating, rating volume, log-scaled rating count, NLTK VADER compound sentiment score, positive review sentiment ratio, and negative sentiment ratio.
+* **Target Variable:** 30-day market demand growth percentage (`demand_growth_pct`).
+
+---
+
+## 4. Model Performance & Mathematical Proof of Accuracy
+
+The model was trained strictly on an **80:20 split** ($40,000$ training samples and $10,000$ unseen holdout test samples) using a tuned **XGBoost Regressor** (`n_estimators=180`, `max_depth=6`, `learning_rate=0.06`).
+
+### Model Evaluation Scorecard
+
+| Metric | Model Performance | Benchmark Requirement | Quality Gate Status |
+| :--- | :---: | :---: | :---: |
+| **Accuracy ($R^2 \times 100\%$)** | **94.00%** | $\ge \mathbf{92.00\%}$ | **PASSED** |
+| **Coefficient of Determination ($R^2$)** | **0.9400** | $\ge 0.9200$ | **PASSED** |
+| **Root Mean Squared Error (RMSE)** | **1.1922** | $\le 12.00$ | **PASSED** |
+| **Mean Absolute Error (MAE)** | **0.9491** | $\le 10.00$ | **PASSED** |
+| **Relative Error** | **2.46%** | $\le 15.0\%$ | **PASSED** |
+| **Relative Closeness Accuracy** | **97.54%** | $\ge 85.0\%$ | **PASSED** |
+
+### Mathematical Proof of Accuracy Using Formulas
+
+Evaluated on the $N = 10,000$ test set from [`processed_data/test.csv`](processed_data/test.csv) with mean target $\bar{y} = 38.5450$:
+
+1. **Total Sum of Squares ($SS_{\text{tot}}$)**:
+   $$SS_{\text{tot}} = \sum_{i=1}^{N} (y_i - \bar{y})^2 = \mathbf{236,975.9204}$$
+
+2. **Residual Sum of Squares ($SS_{\text{res}}$)**:
+   $$SS_{\text{res}} = \sum_{i=1}^{N} (y_i - \hat{y}_i)^2 = \mathbf{14,213.3099}$$
+
+3. **Coefficient of Determination ($R^2$ / Accuracy)**:
+   $$R^2 = 1 - \frac{SS_{\text{res}}}{SS_{\text{tot}}} = 1 - \frac{14,213.3099}{236,975.9204} = 1 - 0.059978 = \mathbf{0.940022}$$
+   $$\mathbf{\text{Accuracy Percentage} = R^2 \times 100\% = 94.00\%}$$
+
+4. **Root Mean Squared Error (RMSE)**:
+   $$\text{RMSE} = \sqrt{\frac{1}{N}\sum_{i=1}^{N} (y_i - \hat{y}_i)^2} = \sqrt{\frac{14,213.3099}{10,000}} = \mathbf{1.1922}$$
+
+5. **Mean Absolute Error (MAE)**:
+   $$\text{MAE} = \frac{1}{N}\sum_{i=1}^{N} |y_i - \hat{y}_i| = \mathbf{0.9491}$$
+
+6. **Relative Closeness**:
+   $$\text{Relative Error} = \left(\frac{0.9491}{38.5450}\right) \times 100\% = 2.46\% \implies \mathbf{\text{Closeness} = 97.54\%}$$
+
+All certified metrics are saved in [`evaluation_output/evaluation.json`](evaluation_output/evaluation.json).
+
+---
+
+## 5. AWS S3 Storage & Artifacts
+
+All approved models and artifacts are automatically synced to the production AWS S3 bucket:
+* **S3 URI:** `s3://consumer-electronics-mlops-533267153786/models/latest/`
+* **AWS Region:** `ap-south-1` (Mumbai)
+* **Available Artifacts:**
+  - `model.joblib`: Production scikit-learn/joblib serialized model
+  - `model.pkl`: Standard pickle serialized model
+  - `xgboost-model.json`: Native XGBoost booster format
+  - `model.tar.gz`: SageMaker-compatible container deployment bundle
+  - `evaluation.json`: Certified quality gate regression metrics
+  - `feature_metadata.json`: Feature baselines and distribution statistics
+
+---
+
+## 6. Repository Structure
+
+```
+├── consumer_electronics_market.csv     # 50,000 pure TWS master dataset (cleanly sorted)
+├── build_50k_tws_dataset.py            # Master dataset generator & TWS synthesizer
+├── preprocessing.py                    # 80:20 train/test split & 27 feature extractor
+├── train_xgboost.py                    # XGBoost training script with S3 upload flag
+├── evaluate.py                         # Model evaluation script producing evaluation.json
+├── train_and_upload_s3.py              # Automated 80:20 training & direct S3 publisher
+├── kaggle_train.py                     # Standalone Kaggle script (cloud training & S3 export)
+├── kaggle_train_model.ipynb            # Kaggle step-by-step Jupyter Notebook
+├── dags/
+│   └── consumer_electronics_airflow_dag.py # Apache Airflow DAG (8 tasks, quality gate branching)
+├── test_airflow_pipeline.py            # Apache Airflow integration test suite
+├── sagemaker_pipeline.py               # AWS SageMaker Pipeline DAG JSON definition
+├── mock_sagemaker_runner.py            # Local SageMaker simulator & DAG runner
+├── test_mock_pipeline.py               # Automated pytest suite for SageMaker pipeline
+├── app.py                              # FastAPI backend & Decision Intelligence Dashboard
+├── requirements.txt                    # Project dependencies
+└── README.md                           # Documentation
+```
+
+---
+
+## 7. Quickstart & Execution
+
+### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Phase 1: Local SageMaker Mock & Automated Testing
+### 2. Run Apache Airflow Verification Suite
+Validates the Airflow DAG structure, topological task ordering, end-to-end task callables, and quality gate threshold enforcement ($\ge 92\%$):
+```bash
+python test_airflow_pipeline.py
+```
 
-#### 1. Run Automated Test Suite (pytest)
-Validates DAG schema, ConditionStep branching (approval vs rejection), and model inference:
+### 3. Run Automated Pytest Suite
 ```bash
 pytest test_mock_pipeline.py -v
 ```
 
-#### 2. Run Local SageMaker Pipeline Simulator
-Executes all 5 SageMaker steps locally with mock container paths, property files, and quality gate:
+### 4. Train Model with 80:20 Split & Upload to S3
 ```bash
-python run_pipeline.py --mode mock
-```
-*Tip: To run a fast test with sample limit, use `python run_pipeline.py --mode mock --sample-limit 1000`.*
-
-#### 3. Test Quality Gate Rejection Branch
-Simulates a scenario where challenger model fails quality criteria (e.g. RMSE threshold = 0.5):
-```bash
-python mock_sagemaker_runner.py --force-fail --sample-limit 1000
+# Trains model on 80:20 split, achieves 94% accuracy, and uploads to AWS S3
+python train_and_upload_s3.py
 ```
 
----
+### 5. Run on Kaggle
+1. Upload [`consumer_electronics_market.csv`](consumer_electronics_market.csv) to Kaggle as a dataset.
+2. Open [`kaggle_train_model.ipynb`](kaggle_train_model.ipynb) in Kaggle Notebooks.
+3. Add your AWS credentials in Kaggle Secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`).
+4. Execute all cells to train with an 80:20 split and export models to AWS S3.
 
-### Phase 2: Deploy to AWS SageMaker (Cloud)
-
-Once local testing passes, submit and execute the pipeline directly on AWS:
-```bash
-# Set your AWS credentials
-aws configure
-
-# Deploy & trigger pipeline execution on AWS SageMaker
-python run_pipeline.py --mode cloud --bucket <your-s3-bucket> --role-arn <your-sagemaker-role-arn> --region ap-south-1 --execute
-```
-
----
-
-### Phase 3: Launch Full Production Dashboard (Backend + Frontend)
-
-Launch the FastAPI backend and enterprise decision intelligence platform:
+### 6. Launch the Interactive Dashboard
 ```bash
 python app.py
 ```
-Open **[http://127.0.0.1:8080](http://127.0.0.1:8080)** in your browser to interact with all 8 production modules:
-1. **Executive Dashboard**: Reference design view with 4 top summary cards, Boat Airdopes 141 hero card with circular score gauge, Chart.js demand growth chart, review sentiment donut, price scatter plot, and competition table.
-2. **Product Analysis**: Acoustic & Hardware Radar Chart (6 dimensions) and technical BOM breakdown.
-3. **Demand Prediction Studio**: Interactive What-If Scenario Simulator with live price, discount, battery, rating sliders and ANC/ENC/Fast-charge toggles running real-time XGBoost inference.
-4. **Sentiment Analysis**: Voice-of-Customer (VoC) sentiment polarity breakdown, positive purchase triggers, and critical customer churn drivers.
-5. **Price & Competition**: Interactive price tier volume distribution and searchable master benchmark table across 20,237 records.
-6. **Market Trends**: 12-month Google Trends trajectory, e-commerce channel shares (Amazon, Flipkart, Quick Commerce), and tech adoption penetration.
-7. **Strategic Recommendations**: Automated Go/No-Go verdict, pricing corridor sweet spot, and competitor weakness exploitation target.
-8. **Model Monitoring & MLOps**: Live SageMaker pipeline telemetry, Champion quality gate scorecard ($R^2 = 90.18\%$, $\text{RMSE} = 2.55$), and live XGBoost Feature Importance chart (Gain/Weight).
-9. **Executive Dossier Export**: Generate structured, printable board-level intelligence briefs with a single click.
-
-## 6. Model Evaluation Results
-
-| Metric | Model Performance | Benchmark Target | Status |
-|---|---|---|---|
-| **RMSE** | **2.55** | < 12.00 | **Passed Quality Gate** |
-| **MAE** | **2.04** | < 10.00 | **Low Average Error** |
-| **R² Score** | **0.902** | > 0.80 | **High Variance Explained** |
-| **Relative Error** | **9.1%** | < 15.0% | **Production-Ready** |
-
----
-
-## 7. CI/CD Automation (GitHub Actions)
-
-The repository includes a production MLOps CI/CD workflow ([`.github/workflows/ci_cd_pipeline.yml`](.github/workflows/ci_cd_pipeline.yml)) with 3 stages:
-1. **Validation & Unit Testing**: Verifies dataset schema integrity (`verify_dataset.py`) and runs pytest test suite (`test_mock_pipeline.py`) across all DAG condition branches.
-2. **Mock SageMaker E2E**: Executes the full 5-stage pipeline locally inside GitHub Actions runner and archives execution summaries.
-3. **AWS Cloud Deployment**: Triggered on push to `main` with AWS credentials configured, uploading code to S3 and upserting the SageMaker Pipeline.
+Open **[http://127.0.0.1:8080](http://127.0.0.1:8080)** to access the real-time opportunity analyzer, what-if demand simulator, acoustic radar charts, and live MLOps pipeline telemetry.
 
 ---
 
 ## 8. License
 
 Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
-
